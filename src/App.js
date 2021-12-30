@@ -126,7 +126,8 @@ async function preloadImages(owners, callback) {
   callback();
 }
 
-const availableColors = [
+let colorIndex = 0;
+const colors = [
   "#363852",
   "#726D81",
   "#B29DA0",
@@ -141,7 +142,8 @@ const takenColorMap = new Map();
 
 function getColor(stringInput) {
   if (!takenColorMap.has(stringInput)) {
-    const color = availableColors.shift();
+    const color = colors[colorIndex % colors.length];
+    colorIndex++;
 
     takenColorMap.set(stringInput, color);
   }
