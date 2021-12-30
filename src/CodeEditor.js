@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import Highlight, { defaultProps } from "prism-react-renderer";
 import theme from "prism-react-renderer/themes/palenight";
-import styles from "./Prism.module.css";
+import styles from "./CodeEditor.module.css";
 
 export default function Prism({ code, onChange }) {
   const [isFocused, setIsFocused] = useState();

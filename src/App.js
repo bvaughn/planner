@@ -2,8 +2,9 @@ import { useLayoutEffect, useMemo, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { tasks as initialTasks, owners as initialOwners } from "./tasks";
 import CanvasChart from "./CanvasChart";
+import CodeEditor from "./CodeEditor";
 import Legend from "./Legend";
-import Prism from "./Prism";
+import { parseCode, stringifyObject } from "./utils/parsing";
 import styles from "./App.module.css";
 
 export default function App() {
@@ -84,26 +85,15 @@ export default function App() {
       <div className={styles.CodeContainer}>
         <div className={styles.CodeColumnLeft}>
           <div className={styles.CodeHeader}>Tasks</div>
-          <Prism code={tasksString} onChange={handleTasksChange} />
+          <CodeEditor code={tasksString} onChange={handleTasksChange} />
         </div>
         <div className={styles.CodeColumnRight}>
           <div className={styles.CodeHeader}>Team</div>
-          <Prism code={ownersString} onChange={handleOwnersChange} />
+          <CodeEditor code={ownersString} onChange={handleOwnersChange} />
         </div>
       </div>
     </div>
   );
-}
-
-function parseCode(maybeCodeString) {
-  // eslint-disable-next-line no-new-func
-  return Function('"use strict";return (' + maybeCodeString + ")")();
-}
-
-function stringifyObject(objectOrArray) {
-  const string = JSON.stringify(objectOrArray, null, 2);
-  // eslint-disable-next-line no-regex-spaces
-  return string.replace(/  "([^"]+)"/g, "  $1");
 }
 
 async function preloadImages(owners, callback) {

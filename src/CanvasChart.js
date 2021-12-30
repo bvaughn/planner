@@ -1,5 +1,12 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import Tooltip from "./Tooltip";
+import {
+  drawTextToFitWidth,
+  drawTextToCenterWithin,
+  drawRoundedRect,
+  drawAvatarCircle,
+} from "./utils/canvas";
+import { getContrastRatio } from "./utils/color";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June"];
 
@@ -7,7 +14,6 @@ const MARGIN = 4;
 const LINE_WIDTH = 1;
 const CORNER_RADIUS = 2;
 const AVATAR_SIZE = 24;
-const VERTICAL_TEXT_OFFSET = 1;
 
 const HEADER_HEIGHT = 20;
 const TASK_BAR_HEIGHT = 8;
@@ -410,112 +416,4 @@ export default function CanvasChart({
       <Tooltip {...tooltipState} />
     </>
   );
-}
-
-function drawTextToFitWidth(context, text, x, y, width, height) {
-  const ellipsisWidth = context.measureText("…").width;
-
-  let resizedText = false;
-
-  let textToRender = text;
-  let textWidth = context.measureText(textToRender).width;
-  if (textWidth > width) {
-    resizedText = true;
-
-    while (textWidth >= width - ellipsisWidth) {
-      textToRender = textToRender.substring(0, textToRender.length - 2) + "…";
-      textWidth = context.measureText(textToRender).width;
-    }
-  }
-
-  context.textBaseline = "middle";
-  context.fillText(
-    textToRender,
-    x,
-    y + height / 2 + VERTICAL_TEXT_OFFSET,
-    width
-  );
-
-  return resizedText ? textWidth : null;
-}
-
-function drawTextToCenterWithin(context, text, x, y, width, height) {
-  const textWidth = context.measureText(text).width;
-
-  context.textBaseline = "middle";
-  context.fillText(
-    text,
-    x + width / 2 - textWidth / 2,
-    y + height / 2 + VERTICAL_TEXT_OFFSET,
-    textWidth
-  );
-}
-
-function drawRoundedRect(context, x, y, width, height, radius) {
-  context.beginPath();
-  context.moveTo(x + radius, y);
-  context.arcTo(x + width, y, x + width, y + height, radius);
-  context.arcTo(x + width, y + height, x, y + height, radius);
-  context.arcTo(x, y + height, x, y, radius);
-  context.arcTo(x, y, x + width, y, radius);
-  context.closePath();
-}
-
-function drawAvatarCircle(context, avatar, x, y, size) {
-  context.save();
-  context.beginPath();
-  drawRoundedRect(context, x, y, size, size, size / 2);
-  context.closePath();
-  context.clip();
-
-  context.drawImage(
-    avatar.image,
-
-    // Native image coordinates and size
-    0,
-    0,
-    avatar.width,
-    avatar.height,
-
-    // Canvas coordinates and scaled image size
-    x,
-    y,
-    size,
-    size
-  );
-
-  context.restore();
-}
-
-function hexToRgb(hex) {
-  if (hex.length === 4) {
-    hex = `#${hex.charAt(1)}${hex.charAt(1)}${hex.charAt(2)}${hex.charAt(
-      2
-    )}${hex.charAt(3)}${hex.charAt(3)}`;
-  }
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? [
-        parseInt(result[1], 16), // r
-        parseInt(result[2], 16), // g
-        parseInt(result[3], 16), // b
-      ]
-    : null;
-}
-
-function getLuminanace(values) {
-  const rgb = values.map((v) => {
-    const val = v / 255;
-    return val <= 0.03928 ? val / 12.92 : ((val + 0.055) / 1.055) ** 2.4;
-  });
-  return Number(
-    (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]).toFixed(3)
-  );
-}
-
-function getContrastRatio(colorA, colorB) {
-  const lumA = getLuminanace(hexToRgb(colorA));
-  const lumB = getLuminanace(hexToRgb(colorB));
-
-  return (Math.max(lumA, lumB) + 0.05) / (Math.min(lumA, lumB) + 0.05);
 }
