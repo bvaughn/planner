@@ -1,0 +1,16 @@
+body {
+  background: #eee;
+  margin: 0;
+  font-family: sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 12px;
+}
+
+code {
+  font-family: monospace;
+}
+
+* {
+  box-sizing: border-box;
+}

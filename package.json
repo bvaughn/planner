@@ -1,0 +1,45 @@
+{
+  "name": "react-devtools-h1-2022",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.16.1",
+    "@testing-library/react": "^12.1.2",
+    "@testing-library/user-event": "^13.5.0",
+    "prism-react-renderer": "^1.2.1",
+    "react": "^18.0.0-rc.0",
+    "react-dom": "^18.0.0-rc.0",
+    "react-scripts": "5.0.0",
+    "react-virtualized-auto-sizer": "^1.0.6",
+    "web-vitals": "^2.1.2"
+  },
+  "devDependencies": {
+    "prettier": "^2.5.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "deploy": "npx now deploy",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "prettier": "prettier --write \"src/**/*.{js,json,css}\""
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

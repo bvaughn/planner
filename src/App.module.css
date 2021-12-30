@@ -1,0 +1,65 @@
+.App {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  padding: 1rem;
+  background: #eee;
+  border: 1px solid #eee;
+  border-radius: 1rem;
+}
+
+.ChartContainer,
+.CodeContainer {
+  background: #fff;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+.ChartContainer {
+  flex: 0 0 auto;
+}
+.CodeContainer {
+  flex: 1 1 auto;
+  overflow: auto;
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: row;
+  min-height: 200px;
+}
+
+.CodeHeader {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.CodeColumnLeft,
+.CodeColumnRight {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+}
+.CodeColumnLeft {
+  flex: 0 1 65%;
+  margin-right: 0.5rem;
+}
+.CodeColumnRight {
+  flex: 0 1 calc(35% - 0.5rem);
+}
+
+@media only screen and (max-width: 800px) {
+  .CodeContainer {
+    flex-direction: column;
+  }
+
+  .CodeColumnLeft {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+    max-height: 65%;
+  }
+
+  .CodeColumnRight {
+    max-height: calc(35% - 0.5rem);
+  }
+}

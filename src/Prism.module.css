@@ -1,0 +1,22 @@
+.Pre,
+.TextArea {
+  max-height: 100%;
+  overflow: auto;
+  margin: 0;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  flex: 1 1 auto;
+}
+
+.Pre {
+  white-space: pre-wrap;
+}
+
+.TextArea {
+  background-color: #292d3e;
+  color: #fff;
+  border: none;
+  appearance: none;
+  resize: none;
+  font-size: 12px;
+}
