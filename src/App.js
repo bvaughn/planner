@@ -126,6 +126,8 @@ async function preloadImages(owners, callback) {
   callback();
 }
 
+// TODO Can I generate colors rather than hard-coding a list?
+
 let colorIndex = 0;
 const colors = [
   "#363852",

@@ -50,6 +50,40 @@ export default function CanvasChart({
     const map = new Map();
     const rows = [];
 
+    // Pre-sort dependencies to always follow parent tasks,
+    // and oder them by (start) month index (lowest to highest).
+    for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
+      const task = tasks[taskIndex];
+      if (task.dependency != null) {
+        let currentIndex = taskIndex - 1;
+        while (currentIndex >= 0) {
+          const currentTask = tasks[currentIndex];
+          let move = false;
+          if (currentTask.id === task.dependency) {
+            move = true;
+          } else if (currentTask.dependency === task.dependency) {
+            if (task.month > currentTask.month) {
+              move = true;
+            } else if (task.month === currentTask.month) {
+              if (task.duration < currentTask.duration) {
+                move = true;
+              } else if (!task.isOngoing && currentTask.isOngoing) {
+                move = true;
+              }
+            }
+          }
+
+          if (move) {
+            tasks.splice(taskIndex, 1);
+            tasks.splice(currentIndex + 1, 0, task);
+            break;
+          } else {
+            currentIndex--;
+          }
+        }
+      }
+    }
+
     tasks.forEach((task) => {
       let nextAvailableRowIndex = -1;
       if (task.dependency == null) {
@@ -97,9 +131,7 @@ export default function CanvasChart({
     return [map, rows.length];
   }, [tasks]);
 
-  const monthWidth = useMemo(() => {
-    return width / MONTHS.length;
-  }, [width]);
+  const monthWidth = width / MONTHS.length;
 
   const height = HEADER_HEIGHT + maxRowIndex * TASK_ROW_HEIGHT;
 
