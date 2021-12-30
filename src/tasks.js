@@ -72,7 +72,7 @@ createTask({
 createTask({
   name: "GitHub issue support",
   month: 2,
-  length: 4,
+  length: 1,
   isOngoing: true,
   owner: "team",
 });

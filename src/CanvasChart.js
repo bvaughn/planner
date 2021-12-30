@@ -13,7 +13,7 @@ const MONTHS = ["January", "February", "March", "April", "May", "June"];
 
 const MARGIN = 4;
 const LINE_WIDTH = 1;
-const CORNER_RADIUS = 2;
+const CORNER_RADIUS = 3;
 const AVATAR_SIZE = 24;
 
 const HEADER_HEIGHT = 20;

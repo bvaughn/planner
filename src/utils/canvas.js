@@ -37,6 +37,7 @@ export function drawTextToCenterWithin(context, text, x, y, width, height) {
   );
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Drawing_shapes
 export function drawRoundedRect(context, x, y, width, height, radius) {
   context.beginPath();
   context.moveTo(x + radius, y);
