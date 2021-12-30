@@ -241,8 +241,7 @@ export default function CanvasChart({
       }
 
       // Render task owner avatars and labels.
-      const textWidth =
-        avatar !== null ? taskWidth - AVATAR_SIZE - MARGIN : taskWidth;
+      const textWidth = taskWidth - AVATAR_SIZE - MARGIN;
       const textHeight = AVATAR_SIZE;
       const textX = taskX + AVATAR_SIZE + MARGIN;
       const textY = taskY - textHeight - MARGIN;

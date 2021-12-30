@@ -1,8 +1,6 @@
 const VERTICAL_TEXT_OFFSET = 1;
 
 export function drawTextToFitWidth(context, text, x, y, width, height) {
-  const ellipsisWidth = context.measureText("…").width;
-
   let resizedText = false;
 
   let textToRender = text;
@@ -10,7 +8,7 @@ export function drawTextToFitWidth(context, text, x, y, width, height) {
   if (textWidth > width) {
     resizedText = true;
 
-    while (textWidth >= width - ellipsisWidth) {
+    while (textWidth >= width) {
       textToRender = textToRender.substring(0, textToRender.length - 2) + "…";
       textWidth = context.measureText(textToRender).width;
     }
