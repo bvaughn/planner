@@ -5,6 +5,7 @@ import CanvasChart from "./CanvasChart";
 import CodeEditor from "./CodeEditor";
 import Legend from "./Legend";
 import { parseCode, stringifyObject } from "./utils/parsing";
+import { getOwnerName } from "./utils/task";
 import styles from "./App.module.css";
 
 export default function App() {
@@ -53,8 +54,7 @@ export default function App() {
 
     for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
       const task = tasks[taskIndex];
-      const owner = owners[task.owner];
-      const ownerName = owner?.name || task.owner || "team";
+      const ownerName = getOwnerName(task, owners);
 
       const color = getColor(ownerName);
 
@@ -143,6 +143,8 @@ const colors = [
 const takenColorMap = new Map();
 
 function getColor(stringInput) {
+  stringInput = stringInput.toLowerCase();
+
   if (!takenColorMap.has(stringInput)) {
     const color = colors[colorIndex % colors.length];
     colorIndex++;

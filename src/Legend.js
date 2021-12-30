@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { getOwnerName } from "./utils/task";
 import styles from "./Legend.module.css";
 
 export default function Legend({ colorMap, owners, tasks }) {
@@ -6,14 +7,14 @@ export default function Legend({ colorMap, owners, tasks }) {
     const set = new Set();
     for (let key in owners) {
       const owner = owners[key];
-      set.add(owner.name);
+      set.add(owner.name.toLowerCase());
     }
 
     for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
       const task = tasks[taskIndex];
       const owner = owners[task.owner];
       if (owner == null) {
-        const ownerName = task.owner || "team";
+        const ownerName = getOwnerName(task, owners);
         set.add(ownerName);
       }
     }

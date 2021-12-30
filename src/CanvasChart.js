@@ -7,6 +7,7 @@ import {
   drawAvatarCircle,
 } from "./utils/canvas";
 import { getContrastRatio } from "./utils/color";
+import { getOwnerName } from "./utils/task";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June"];
 
@@ -187,7 +188,7 @@ export default function CanvasChart({
       const owner = owners[task.owner];
       const avatar = owner?.avatar || null;
 
-      const ownerName = owner?.name || task.owner || "team";
+      const ownerName = getOwnerName(task, owners);
       const color = colorMap.get(ownerName);
 
       const rowIndex = taskToRowIndexMap.get(task);
@@ -268,7 +269,7 @@ export default function CanvasChart({
 
         context.fill();
 
-        const ownerName = owner?.name || task.owner || "team";
+        const ownerName = getOwnerName(task, owners);
         const character = ownerName.charAt(0).toUpperCase();
 
         context.font = "bold 15px sans-serif";
