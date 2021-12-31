@@ -36,6 +36,7 @@ const DEFAULT_TOOLTIP_STATE = {
 export default function CanvasChart({
   colorMap,
   owners,
+  ownerToImageMap,
   preloadCounter,
   tasks,
   width,
@@ -186,7 +187,7 @@ export default function CanvasChart({
     for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
       const task = tasks[taskIndex];
       const owner = owners[task.owner];
-      const avatar = owner?.avatar || null;
+      const avatar = ownerToImageMap.get(owner) || null;
 
       const ownerName = getOwnerName(task, owners);
       const color = colorMap.get(ownerName);

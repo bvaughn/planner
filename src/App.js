@@ -1,31 +1,38 @@
 import { useLayoutEffect, useMemo, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { tasks as initialTasks, owners as initialOwners } from "./tasks";
 import CanvasChart from "./CanvasChart";
 import CodeEditor from "./CodeEditor";
 import Legend from "./Legend";
 import { parseCode, stringifyObject } from "./utils/parsing";
 import { getOwnerName } from "./utils/task";
+import { owners as initialOwners, tasks as initialTasks } from "./tasks";
+import { useURLData } from "./hooks";
 import styles from "./App.module.css";
 
 export default function App() {
-  const [tasks, setTasks] = useState(initialTasks);
-  const [owners, setOwners] = useState(initialOwners);
-
   const [preloadCounter, setPreloadCounter] = useState(false);
 
-  const [tasksString, setTasksString] = useState(() =>
-    stringifyObject(initialTasks)
+  const [data, setData] = useURLData(
+    { tasks: initialTasks, owners: initialOwners },
+    (newData) => {
+      return newData.owners != null && Array.isArray(newData.tasks);
+    }
   );
-  const [ownersString, setOwnersString] = useState(
-    () => `// Optional team metadata\n\n${stringifyObject(initialOwners)}`
+
+  const { owners, tasks } = data;
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const ownerToImageMap = useMemo(() => new Map(), [owners]);
+
+  const ownersString = useMemo(
+    () => stringifyObject(data.owners),
+    [data.owners]
   );
+  const tasksString = useMemo(() => stringifyObject(data.tasks), [data.tasks]);
 
   const handleOwnersChange = (newString) => {
     try {
-      const parsed = parseCode(newString);
-      setOwners(parsed);
-      setOwnersString(newString);
+      setData({ ...data, owners: parseCode(newString) });
     } catch (error) {
       // Parsing errors are fine; they're expected while typing.
     }
@@ -33,9 +40,7 @@ export default function App() {
 
   const handleTasksChange = (newString) => {
     try {
-      const parsed = parseCode(newString);
-      setTasks(parsed);
-      setTasksString(newString);
+      setData({ ...data, tasks: parseCode(newString) });
     } catch (error) {
       // Parsing errors are fine; they're expected while typing.
     }
@@ -43,10 +48,10 @@ export default function App() {
 
   // Pre-load images so we can draw avatars to the Canvas.
   useLayoutEffect(() => {
-    preloadImages(owners, () => {
+    preloadImages(owners, ownerToImageMap, () => {
       setPreloadCounter((value) => value + 1);
     });
-  }, [owners]);
+  }, [owners, ownerToImageMap]);
 
   // Generate unique colors for each owner to mark their tasks.
   const colorMap = useMemo(() => {
@@ -74,6 +79,7 @@ export default function App() {
             <CanvasChart
               colorMap={colorMap}
               owners={owners}
+              ownerToImageMap={ownerToImageMap}
               preloadCounter={preloadCounter}
               tasks={tasks}
               width={width}
@@ -96,22 +102,22 @@ export default function App() {
   );
 }
 
-async function preloadImages(owners, callback) {
+async function preloadImages(owners, ownerToImageMap, callback) {
   const promises = [];
 
   for (let key in owners) {
     const owner = owners[key];
 
-    if (owner?.avatar != null) {
+    if (owner?.avatar != null && typeof owner?.avatar === "string") {
       promises.push(
         new Promise((resolve) => {
           const image = new Image();
           image.onload = () => {
-            owner.avatar = {
+            ownerToImageMap.set(owner, {
               height: image.naturalHeight,
               image,
               width: image.naturalWidth,
-            };
+            });
 
             resolve();
           };
