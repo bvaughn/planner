@@ -8,7 +8,7 @@ export function drawTextToFitWidth(context, text, x, y, width, height) {
   if (textWidth > width) {
     resizedText = true;
 
-    while (textWidth >= width) {
+    while (textWidth >= width && textToRender.length > 1) {
       textToRender = textToRender.substring(0, textToRender.length - 2) + "…";
       textWidth = context.measureText(textToRender).width;
     }
