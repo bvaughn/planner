@@ -9,12 +9,15 @@ function saveToLocation(data) {
 export function useURLData(initialData, validateCallback) {
   const [data, setData] = useState(initialData);
 
-  const setDataWrapper = (newData) => {
-    if (validateCallback(newData)) {
-      saveToLocation(newData);
-      setData(newData);
-    }
-  };
+  const setDataWrapper = useCallback(
+    (newData) => {
+      if (validateCallback(newData)) {
+        saveToLocation(newData);
+        setData(newData);
+      }
+    },
+    [validateCallback]
+  );
 
   useLayoutEffect(() => {
     function parseDataFromLocation() {
@@ -45,7 +48,7 @@ export function useURLData(initialData, validateCallback) {
     return () => {
       window.removeEventListener("hashchange", parseDataFromLocation);
     };
-  }, []);
+  }, [setDataWrapper, validateCallback]);
 
   return [data, setDataWrapper];
 }

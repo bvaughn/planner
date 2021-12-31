@@ -3,21 +3,21 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import CanvasChart from "./CanvasChart";
 import CodeEditor from "./CodeEditor";
 import Legend from "./Legend";
-import { getColorForString } from "./utils/color";
 import { parseCode, stringifyObject } from "./utils/parsing";
-import { getOwnerName } from "./utils/task";
 import { owners as initialOwners, tasks as initialTasks } from "./tasks";
 import { useURLData } from "./hooks";
 import styles from "./App.module.css";
+
+function validateData(newData) {
+  return newData.owners != null && Array.isArray(newData.tasks);
+}
 
 export default function App() {
   const [preloadCounter, setPreloadCounter] = useState(false);
 
   const [data, setData] = useURLData(
     { tasks: initialTasks, owners: initialOwners },
-    (newData) => {
-      return newData.owners != null && Array.isArray(newData.tasks);
-    }
+    validateData
   );
 
   const { owners, tasks } = data;

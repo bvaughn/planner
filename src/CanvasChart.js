@@ -397,6 +397,7 @@ export default function CanvasChart({
     height,
     monthWidth,
     owners,
+    ownerToImageMap,
     preloadCounter,
     taskToRowIndexMap,
     tasks,

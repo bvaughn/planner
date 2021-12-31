@@ -33,8 +33,12 @@ export default function Legend({ owners, tasks }) {
   return (
     <div className={styles.Legend}>
       <div className={styles.LogoContainer}>
-        <a href="https://github.com/bvaughn/planner" target="_blank">
-          <img className={styles.Logo} src={gitHubLogo} />
+        <a
+          href="https://github.com/bvaughn/planner"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <img className={styles.Logo} src={gitHubLogo} alt="GitHub logo" />
         </a>
       </div>
       <ul className={styles.List}>
