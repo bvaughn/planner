@@ -1,4 +1,4 @@
-export const owners = {
+export const team = {
   bvaughn: {
     avatar: "https://avatars.githubusercontent.com/u/29597",
     name: "Brian",

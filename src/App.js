@@ -5,33 +5,30 @@ import CanvasChart from "./CanvasChart";
 import CodeEditor from "./CodeEditor";
 import Header from "./Header";
 import { parseCode, stringifyObject } from "./utils/parsing";
-import { owners as initialOwners, tasks as initialTasks } from "./tasks";
+import { team as initialOwners, tasks as initialTasks } from "./tasks";
 import useURLData from "./hooks/useURLData";
 import styles from "./App.module.css";
 
-const defaultData = { tasks: initialTasks, owners: initialOwners };
+const defaultData = { tasks: initialTasks, team: initialOwners };
 
 export default function App() {
   const [preloadCounter, setPreloadCounter] = useState(false);
 
   const [data, setData] = useURLData(defaultData);
 
-  const { owners, tasks } = data;
+  const { team, tasks } = data;
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const ownerToImageMap = useMemo(() => new Map(), [owners]);
+  const ownerToImageMap = useMemo(() => new Map(), [team]);
 
-  const ownersString = useMemo(
-    () => stringifyObject(data.owners),
-    [data.owners]
-  );
+  const teamString = useMemo(() => stringifyObject(data.team), [data.team]);
   const tasksString = useMemo(() => stringifyObject(data.tasks), [data.tasks]);
 
   const handleOwnersChange = (newString) => {
     try {
       const newOwners = parseCode(newString);
       if (newOwners != null) {
-        setData({ ...data, owners: newOwners });
+        setData({ ...data, team: newOwners });
       }
     } catch (error) {
       // Parsing errors are fine; they're expected while typing.
@@ -51,13 +48,13 @@ export default function App() {
 
   // Pre-load images so we can draw avatars to the Canvas.
   useLayoutEffect(() => {
-    preloadImages(owners, ownerToImageMap, () => {
+    preloadImages(team, ownerToImageMap, () => {
       // Now that all images have been pre-loaded, re-render and draw them to the Canvas.
       // Incrementing this counter just lets React know we want to re-render.
       // The specific count value has no significance.
       setPreloadCounter((value) => value + 1);
     });
-  }, [owners, ownerToImageMap]);
+  }, [team, ownerToImageMap]);
 
   const resetError = () => {
     setData(defaultData);
@@ -65,14 +62,14 @@ export default function App() {
 
   return (
     <div className={styles.App}>
-      <Header owners={owners} tasks={tasks} />
+      <Header team={team} tasks={tasks} />
 
       <div className={styles.ChartContainer}>
         <ErrorBoundary FallbackComponent={ErrorFallback} onReset={resetError}>
           <AutoSizer disableHeight>
             {({ width }) => (
               <CanvasChart
-                owners={owners}
+                team={team}
                 ownerToImageMap={ownerToImageMap}
                 preloadCounter={preloadCounter}
                 tasks={tasks}
@@ -86,11 +83,19 @@ export default function App() {
       <div className={styles.CodeContainer}>
         <div className={styles.CodeColumnLeft}>
           <div className={styles.CodeHeader}>Tasks</div>
-          <CodeEditor code={tasksString} onChange={handleTasksChange} />
+          <CodeEditor
+            code={tasksString}
+            onChange={handleTasksChange}
+            testName="tasks"
+          />
         </div>
         <div className={styles.CodeColumnRight}>
           <div className={styles.CodeHeader}>Team</div>
-          <CodeEditor code={ownersString} onChange={handleOwnersChange} />
+          <CodeEditor
+            code={teamString}
+            onChange={handleOwnersChange}
+            testName="team"
+          />
         </div>
       </div>
     </div>
@@ -107,11 +112,11 @@ function ErrorFallback({ error, resetErrorBoundary }) {
   );
 }
 
-async function preloadImages(owners, ownerToImageMap, callback) {
+async function preloadImages(team, ownerToImageMap, callback) {
   const promises = [];
 
-  for (let key in owners) {
-    const owner = owners[key];
+  for (let key in team) {
+    const owner = team[key];
 
     if (owner?.avatar != null && typeof owner?.avatar === "string") {
       promises.push(

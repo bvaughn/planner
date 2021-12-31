@@ -26,7 +26,7 @@ function redo() {
   history.forward();
 }
 
-export default function Header({ owners, tasks }) {
+export default function Header({ team, tasks }) {
   const snapshot = useSyncExternalStore(subscribeToHistory, getSnapshot);
   const [currentIndex, maxIndex] = JSON.parse(snapshot);
 
@@ -57,7 +57,7 @@ export default function Header({ owners, tasks }) {
           <RedoIcon className={styles.Icon} width={20} height={20} />
         </button>
       </div>
-      <Legend owners={owners} tasks={tasks} />
+      <Legend team={team} tasks={tasks} />
       <div className={styles.RightContainer}>
         <a
           href="https://github.com/bvaughn/planner"

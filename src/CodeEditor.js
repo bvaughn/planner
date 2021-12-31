@@ -3,7 +3,7 @@ import Highlight, { defaultProps } from "prism-react-renderer";
 import theme from "prism-react-renderer/themes/palenight";
 import styles from "./CodeEditor.module.css";
 
-export default function Prism({ code, onChange }) {
+export default function Prism({ code, onChange, testName }) {
   const [isFocused, setIsFocused] = useState();
   const textAreaRef = useRef();
 
@@ -18,17 +18,12 @@ export default function Prism({ code, onChange }) {
 
   const handleBlur = (event) => {
     setIsFocused(false);
+
+    onChange(event.target.value);
   };
 
   const handleFocus = (event) => {
     setIsFocused(true);
-  };
-
-  const handleChange = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    onChange(event.target.value);
   };
 
   const handleKeyDown = (event) => {
@@ -44,13 +39,13 @@ export default function Prism({ code, onChange }) {
   if (isFocused) {
     return (
       <textarea
+        data-testname={`CodeEditor-textarea-${testName}`}
         defaultValue={code}
         className={styles.TextArea}
         onBlur={handleBlur}
-        onChange={handleChange}
         onKeyDown={handleKeyDown}
         ref={textAreaRef}
-        spellcheck="false"
+        spellCheck="false"
       />
     );
   }
@@ -66,6 +61,7 @@ export default function Prism({ code, onChange }) {
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
         <pre
           className={`${className} ${styles.Pre}`}
+          data-testname={`CodeEditor-pre-${testName}`}
           onFocus={handleFocus}
           style={style}
           tabIndex={0}

@@ -34,7 +34,7 @@ const DEFAULT_TOOLTIP_STATE = {
 };
 
 export default function CanvasChart({
-  owners,
+  team,
   ownerToImageMap,
   preloadCounter,
   tasks,
@@ -185,10 +185,10 @@ export default function CanvasChart({
 
     for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
       const task = tasks[taskIndex];
-      const owner = owners[task.owner];
+      const owner = team[task.owner];
       const avatar = ownerToImageMap.get(owner) || null;
 
-      const ownerName = getOwnerName(task, owners);
+      const ownerName = getOwnerName(task, team);
       const color = getColorForString(ownerName);
 
       const rowIndex = taskToRowIndexMap.get(task);
@@ -268,7 +268,7 @@ export default function CanvasChart({
 
         context.fill();
 
-        const ownerName = getOwnerName(task, owners);
+        const ownerName = getOwnerName(task, team);
         const character = ownerName.charAt(0).toUpperCase();
 
         context.font = "bold 15px sans-serif";
@@ -411,7 +411,7 @@ export default function CanvasChart({
   }, [
     height,
     monthWidth,
-    owners,
+    team,
     ownerToImageMap,
     preloadCounter,
     taskToRowIndexMap,
