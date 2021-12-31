@@ -25,7 +25,14 @@ test.describe("Teams", () => {
   let page;
 
   test.beforeEach(async ({ browser }) => {
-    page = await browser.newPage();
+    const context = await browser.newContext({
+      viewport: {
+        width: 1024,
+        height: 800,
+      },
+    });
+
+    page = await context.newPage();
 
     const url = getUrlForData({ tasks, team });
 
