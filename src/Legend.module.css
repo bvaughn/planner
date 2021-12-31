@@ -1,25 +1,9 @@
-.Legend {
-  flex: 0 0 auto;
-  display: flex;
-}
-
-.LogoContainer {
-  margin: 0 0.25rem 0 0;
-  padding: 0.25rem;
-}
-
-.Logo {
-  width: 20px;
-  height: 20px;
-}
-
 .List {
   flex: 1 1 auto;
   display: flex;
   justify-content: space-around;
   padding: 0;
   margin: 0;
-  margin-bottom: 0.5rem;
 }
 
 .ListItem {

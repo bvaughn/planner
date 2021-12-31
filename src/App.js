@@ -1,8 +1,9 @@
 import { useLayoutEffect, useMemo, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import AutoSizer from "react-virtualized-auto-sizer";
 import CanvasChart from "./CanvasChart";
 import CodeEditor from "./CodeEditor";
-import Legend from "./Legend";
+import Header from "./Header";
 import { parseCode, stringifyObject } from "./utils/parsing";
 import { owners as initialOwners, tasks as initialTasks } from "./tasks";
 import useURLData from "./hooks/useURLData";
@@ -58,22 +59,28 @@ export default function App() {
     });
   }, [owners, ownerToImageMap]);
 
+  const resetError = () => {
+    setData(defaultData);
+  };
+
   return (
     <div className={styles.App}>
-      <Legend owners={owners} tasks={tasks} />
+      <Header owners={owners} tasks={tasks} />
 
       <div className={styles.ChartContainer}>
-        <AutoSizer disableHeight>
-          {({ width }) => (
-            <CanvasChart
-              owners={owners}
-              ownerToImageMap={ownerToImageMap}
-              preloadCounter={preloadCounter}
-              tasks={tasks}
-              width={width}
-            />
-          )}
-        </AutoSizer>
+        <ErrorBoundary FallbackComponent={ErrorFallback} onReset={resetError}>
+          <AutoSizer disableHeight>
+            {({ width }) => (
+              <CanvasChart
+                owners={owners}
+                ownerToImageMap={ownerToImageMap}
+                preloadCounter={preloadCounter}
+                tasks={tasks}
+                width={width}
+              />
+            )}
+          </AutoSizer>
+        </ErrorBoundary>
       </div>
 
       <div className={styles.CodeContainer}>
@@ -87,6 +94,16 @@ export default function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ErrorFallback({ error, resetErrorBoundary }) {
+  return (
+    <>
+      <div className={styles.ErrorHeader}>Something went wrong:</div>
+      <pre className={styles.ErrorMessage}>{error.message}</pre>
+      <button onClick={resetErrorBoundary}>Try again</button>
+    </>
   );
 }
 

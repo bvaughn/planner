@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { getOwnerName } from "./utils/task";
-import gitHubLogo from "./images/github.png";
 import { getColorForString } from "./utils/color";
 import styles from "./Legend.module.css";
 
@@ -31,27 +30,16 @@ export default function Legend({ owners, tasks }) {
   }
 
   return (
-    <div className={styles.Legend}>
-      <div className={styles.LogoContainer}>
-        <a
-          href="https://github.com/bvaughn/planner"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <img className={styles.Logo} src={gitHubLogo} alt="GitHub logo" />
-        </a>
-      </div>
-      <ul className={styles.List}>
-        {ownerNamesArray.sort().map((name) => (
-          <li key={name} className={styles.ListItem}>
-            <span
-              className={styles.Chip}
-              style={{ backgroundColor: getColorForString(name) }}
-            ></span>{" "}
-            {name}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ul className={styles.List}>
+      {ownerNamesArray.sort().map((name) => (
+        <li key={name} className={styles.ListItem}>
+          <span
+            className={styles.Chip}
+            style={{ backgroundColor: getColorForString(name) }}
+          ></span>{" "}
+          {name}
+        </li>
+      ))}
+    </ul>
   );
 }

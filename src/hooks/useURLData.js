@@ -1,45 +1,44 @@
 import { useMemo, useSyncExternalStore } from "react";
+import history from "history/browser";
+import { saveSearchToHistory, subscribeToHistory } from "../utils/history";
 
 function getSnapshot() {
-  // Return the current hash, minus the leading "#"
-  return window.location.hash.substring(1);
+  try {
+    const search = history.location.search;
+    if (search) {
+      return window.atob(search.substr(1));
+    }
+  } catch (error) {
+    console.error(error);
+  }
+  return null;
 }
 
-function saveToHash(data) {
+function saveToLocation(data) {
   const string = JSON.stringify(data);
   const encoded = window.btoa(string);
 
-  window.location.hash = `encoded=${encoded}`;
-}
-
-function subscribe(callback) {
-  window.addEventListener("hashchange", callback);
-  return () => {
-    window.removeEventListener("hashchange", callback);
-  };
+  saveSearchToHistory(encoded);
 }
 
 // Params defaultData and validateCallback should both be stable/memoized
 export default function useURLData(defaultData) {
-  const hash = useSyncExternalStore(subscribe, getSnapshot);
+  const snapshot = useSyncExternalStore(subscribeToHistory, getSnapshot);
 
   const data = useMemo(() => {
     try {
-      const params = new URLSearchParams(hash);
-      if (params.has("encoded")) {
-        const encoded = params.get("encoded");
-        const decoded = window.atob(encoded);
-        return JSON.parse(decoded);
-      }
+      const parsed = JSON.parse(snapshot);
+      return parsed || defaultData;
     } catch (error) {
       console.error(error);
+    } finally {
     }
     return defaultData;
-  }, [hash, defaultData]);
+  }, [defaultData, snapshot]);
 
-  // No need to mirror in React state; just save to the hash.
+  // No need to mirror in React state; just save to the location.
   // This will trigger a re-render via the useSyncExternalStore subscription.
-  const setData = saveToHash;
+  const setData = saveToLocation;
 
   return [data, setData];
 }

@@ -1,0 +1,28 @@
+.Header {
+  flex: 0 0 auto;
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+
+.IconContainer {
+  display: flex;
+  align-items: center;
+}
+
+.Icon {
+  width: 20px;
+  height: 20px;
+  color: #363852;
+}
+
+.ButtonOrLink {
+  display: flex;
+  margin-right: 0.5rem;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+.ButtonOrLink:disabled {
+  opacity: 0.5;
+}
