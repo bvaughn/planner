@@ -8,20 +8,17 @@ const tasks = [
     month: 0,
     length: 1,
     owner: "bvaughn",
-    name: "Example",
+    name: "Brian's project",
+  },
+  {
+    month: 2,
+    length: 3,
+    owner: "team",
+    name: "Team project",
   },
 ];
 
-const team = {
-  bvaughn: {
-    avatar: "https://avatars.githubusercontent.com/u/29597",
-    name: "Brian",
-  },
-  team: {
-    avatar: null,
-    name: "Unclaimed",
-  },
-};
+const team = {};
 
 test.use(config);
 test.describe("Teams", () => {
@@ -41,19 +38,53 @@ test.describe("Teams", () => {
 
   test("should be editable", async () => {
     const innerTextBefore = await getTestNameInnerText(page, "Legend-list");
-    expect(innerTextBefore).toMatchSnapshot("team-before.txt");
-
+    expect(innerTextBefore).toMatchSnapshot("team-1.txt");
     expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
-      "canvas-screenshot-before.png"
+      "canvas-screenshot-1.png"
     );
 
-    await setEditorText(page, "team", "[]");
+    // Change team configuration.
+    await setEditorText(
+      page,
+      "team",
+      JSON.stringify({
+        bvaughn: {
+          avatar: "https://avatars.githubusercontent.com/u/29597",
+          name: "Brian",
+        },
+        team: {
+          avatar: null,
+          name: "Unclaimed",
+        },
+      })
+    );
 
+    // Verify that the Legend has been updated and the Canvas has redrawn.
     const innerTextAfter = await getTestNameInnerText(page, "Legend-list");
-    expect(innerTextAfter).toMatchSnapshot("team-after.txt");
-
+    expect(innerTextAfter).toMatchSnapshot("team-2.txt");
     expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
-      "canvas-screenshot-after.png"
+      "canvas-screenshot-2.png"
+    );
+
+    // Change user avatar.
+    await setEditorText(
+      page,
+      "team",
+      JSON.stringify({
+        bvaughn: {
+          avatar: "https://avatars.githubusercontent.com/u/29597",
+          name: "Brian",
+        },
+        team: {
+          avatar: "https://avatars.githubusercontent.com/u/6412038?s=200&v=4",
+          name: "Unclaimed",
+        },
+      })
+    );
+
+    // Verify that the Canvas has redrawn with the new avatar.
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "canvas-screenshot-3.png"
     );
   });
 });
