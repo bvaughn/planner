@@ -36,7 +36,6 @@ export function getContrastRatio(colorA, colorB) {
   );
 }
 
-// TODO Can I generate colors rather than hard-coding a list?
 let colorIndex = 0;
 const colors = [
   "#363852",
@@ -55,10 +54,28 @@ export function getColorForString(string) {
   string = string.toLowerCase();
 
   if (!stringToColorMap.has(string)) {
-    const color = colors[colorIndex % colors.length];
-    colorIndex++;
+    // Use pretty (hard-coded) colors for the first few tasks.
+    if (colorIndex < colors.length) {
+      const color = colors[colorIndex % colors.length];
+      colorIndex++;
 
-    stringToColorMap.set(string, color);
+      stringToColorMap.set(string, color);
+    } else {
+      // Fall back to randomly generated colors if we run out.
+      // https://gist.github.com/0x263b/2bdd90886c2036a1ad5bcf06d6e6fb37
+      let hash = 0;
+      if (string.length === 0) return "#000000";
+      for (var i = 0; i < string.length; i++) {
+        hash = string.charCodeAt(i) + ((hash << 5) - hash);
+        hash = hash & hash;
+      }
+      let color = "#";
+      for (let i = 0; i < 3; i++) {
+        let value = (hash >> (i * 8)) & 255;
+        color += ("00" + value.toString(16)).substr(-2);
+      }
+      stringToColorMap.set(string, color);
+    }
   }
 
   return stringToColorMap.get(string);
