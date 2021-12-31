@@ -10,10 +10,6 @@ import styles from "./App.module.css";
 
 const defaultData = { tasks: initialTasks, owners: initialOwners };
 
-function validateData(newData) {
-  return newData.owners != null && Array.isArray(newData.tasks);
-}
-
 export default function App() {
   const [preloadCounter, setPreloadCounter] = useState(false);
 
@@ -32,9 +28,9 @@ export default function App() {
 
   const handleOwnersChange = (newString) => {
     try {
-      const newData = { ...data, owners: parseCode(newString) };
-      if (validateData(newData)) {
-        setData(newData);
+      const newOwners = parseCode(newString);
+      if (newOwners != null) {
+        setData({ ...data, owners: newOwners });
       }
     } catch (error) {
       // Parsing errors are fine; they're expected while typing.
@@ -43,9 +39,9 @@ export default function App() {
 
   const handleTasksChange = (newString) => {
     try {
-      const newData = { ...data, tasks: parseCode(newString) };
-      if (validateData(newData)) {
-        setData(newData);
+      const newTasks = parseCode(newString);
+      if (newTasks != null && Array.isArray(newTasks)) {
+        setData({ ...data, tasks: newTasks });
       }
     } catch (error) {
       // Parsing errors are fine; they're expected while typing.
@@ -55,6 +51,9 @@ export default function App() {
   // Pre-load images so we can draw avatars to the Canvas.
   useLayoutEffect(() => {
     preloadImages(owners, ownerToImageMap, () => {
+      // Now that all images have been pre-loaded, re-render and draw them to the Canvas.
+      // Incrementing this counter just lets React know we want to re-render.
+      // The specific count value has no significance.
       setPreloadCounter((value) => value + 1);
     });
   }, [owners, ownerToImageMap]);
