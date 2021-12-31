@@ -50,6 +50,7 @@ export default function Prism({ code, onChange }) {
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         ref={textAreaRef}
+        spellcheck="false"
       />
     );
   }
