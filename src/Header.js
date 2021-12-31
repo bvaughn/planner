@@ -32,7 +32,7 @@ export default function Header({ owners, tasks }) {
 
   return (
     <div className={styles.Header}>
-      <div className={styles.IconContainer}>
+      <div className={styles.LeftContainer}>
         <button
           className={styles.ButtonOrLink}
           onClick={copyLocation}
@@ -58,7 +58,7 @@ export default function Header({ owners, tasks }) {
         </button>
       </div>
       <Legend owners={owners} tasks={tasks} />
-      <div className={styles.IconContainer}>
+      <div className={styles.RightContainer}>
         <a
           href="https://github.com/bvaughn/planner"
           target="_blank"

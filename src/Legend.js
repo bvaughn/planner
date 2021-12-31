@@ -25,10 +25,6 @@ export default function Legend({ owners, tasks }) {
     return Array.from(set);
   }, [owners, tasks]);
 
-  if (ownerNamesArray.length === 0) {
-    return null;
-  }
-
   return (
     <ul className={styles.List}>
       {ownerNamesArray.sort().map((name) => (
