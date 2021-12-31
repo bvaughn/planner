@@ -8,11 +8,7 @@ const CUSTOM_CHANGE_EVENT_TYPE = "sync-external-store-changed";
 let maxIndex = getCurrentIndex();
 
 export function getCurrentIndex() {
-  if (history.location.state?.index >= 0) {
-    return history.location.state.index;
-  } else {
-    return 0;
-  }
+  return history.location.state?.index || 0;
 }
 
 export function getMaxIndex() {
@@ -20,6 +16,11 @@ export function getMaxIndex() {
 }
 
 export function saveSearchToHistory(search) {
+  if (history.location.search === `?${search}`) {
+    // Don't push a new History entry if the search string hasn't changed.
+    return;
+  }
+
   const currentIndex = getCurrentIndex();
 
   // Saving a new URL always throws away history after the current state.
