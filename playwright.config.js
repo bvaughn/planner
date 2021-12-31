@@ -12,7 +12,7 @@ const config = {
     browserName: 'chromium',
     launchOptions: {
       // This bit of delay gives async React time to render
-      slowMo: 100,
+      slowMo: 500,
     },
   },
 };
