@@ -310,10 +310,16 @@ export default function CanvasChart({
         const dependencyId = task.dependency;
         const dependency = taskMap.get(dependencyId);
 
-        if (!dependenciesMap.has(dependency)) {
-          dependenciesMap.set(dependency, []);
+        if (dependency == null) {
+          console.warn(
+            `Invalid dependenc; no parent task found with id ${dependencyId}`
+          );
+        } else {
+          if (!dependenciesMap.has(dependency)) {
+            dependenciesMap.set(dependency, []);
+          }
+          dependenciesMap.get(dependency).push(taskMap.get(task.id));
         }
-        dependenciesMap.get(dependency).push(taskMap.get(task.id));
       }
     }
 
