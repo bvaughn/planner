@@ -345,7 +345,16 @@ export default function CanvasChart({
         return;
       }
 
-      const x = firstTask.month * monthWidth - MARGIN - LINE_SEGMENT_MIN_LENGTH;
+      const maxX =
+        firstTask.month * monthWidth - MARGIN - LINE_SEGMENT_MIN_LENGTH;
+      const minX = parentTask.month * monthWidth + MARGIN;
+      const x = Math.max(
+        minX,
+        Math.min(
+          maxX,
+          parentTask.month * monthWidth + (parentTask.length * monthWidth) / 2
+        )
+      );
 
       const y0 =
         HEADER_HEIGHT +
