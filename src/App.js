@@ -5,8 +5,10 @@ import CodeEditor from "./CodeEditor";
 import Legend from "./Legend";
 import { parseCode, stringifyObject } from "./utils/parsing";
 import { owners as initialOwners, tasks as initialTasks } from "./tasks";
-import { useURLData } from "./hooks";
+import useURLData from "./hooks/useURLData";
 import styles from "./App.module.css";
+
+const defaultData = { tasks: initialTasks, owners: initialOwners };
 
 function validateData(newData) {
   return newData.owners != null && Array.isArray(newData.tasks);
@@ -15,10 +17,7 @@ function validateData(newData) {
 export default function App() {
   const [preloadCounter, setPreloadCounter] = useState(false);
 
-  const [data, setData] = useURLData(
-    { tasks: initialTasks, owners: initialOwners },
-    validateData
-  );
+  const [data, setData] = useURLData(defaultData);
 
   const { owners, tasks } = data;
 
@@ -33,7 +32,10 @@ export default function App() {
 
   const handleOwnersChange = (newString) => {
     try {
-      setData({ ...data, owners: parseCode(newString) });
+      const newData = { ...data, owners: parseCode(newString) };
+      if (validateData(newData)) {
+        setData(newData);
+      }
     } catch (error) {
       // Parsing errors are fine; they're expected while typing.
     }
@@ -41,7 +43,10 @@ export default function App() {
 
   const handleTasksChange = (newString) => {
     try {
-      setData({ ...data, tasks: parseCode(newString) });
+      const newData = { ...data, tasks: parseCode(newString) };
+      if (validateData(newData)) {
+        setData(newData);
+      }
     } catch (error) {
       // Parsing errors are fine; they're expected while typing.
     }
