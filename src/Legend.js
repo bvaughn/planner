@@ -33,7 +33,7 @@ export default function Legend({ owners, tasks }) {
             className={styles.Chip}
             style={{ backgroundColor: getColorForString(name) }}
           ></span>{" "}
-          {name}
+          <span className={styles.ItemName}>{name}</span>
         </li>
       ))}
     </ul>
