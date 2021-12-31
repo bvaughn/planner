@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { getOwnerName } from "./utils/task";
 import gitHubLogo from "./images/github.png";
+import { getColorForString } from "./utils/color";
 import styles from "./Legend.module.css";
 
-export default function Legend({ colorMap, owners, tasks }) {
+export default function Legend({ owners, tasks }) {
   const ownerNamesArray = useMemo(() => {
     const set = new Set();
     for (let key in owners) {
@@ -41,7 +42,7 @@ export default function Legend({ colorMap, owners, tasks }) {
           <li key={name} className={styles.ListItem}>
             <span
               className={styles.Chip}
-              style={{ backgroundColor: colorMap.get(name) }}
+              style={{ backgroundColor: getColorForString(name) }}
             ></span>{" "}
             {name}
           </li>

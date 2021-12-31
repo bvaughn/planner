@@ -6,7 +6,7 @@ import {
   drawRoundedRect,
   drawAvatarCircle,
 } from "./utils/canvas";
-import { getContrastRatio } from "./utils/color";
+import { getColorForString, getContrastRatio } from "./utils/color";
 import { getOwnerName } from "./utils/task";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June"];
@@ -34,7 +34,6 @@ const DEFAULT_TOOLTIP_STATE = {
 };
 
 export default function CanvasChart({
-  colorMap,
   owners,
   ownerToImageMap,
   preloadCounter,
@@ -190,7 +189,7 @@ export default function CanvasChart({
       const avatar = ownerToImageMap.get(owner) || null;
 
       const ownerName = getOwnerName(task, owners);
-      const color = colorMap.get(ownerName);
+      const color = getColorForString(ownerName);
 
       const rowIndex = taskToRowIndexMap.get(task);
 
@@ -395,7 +394,6 @@ export default function CanvasChart({
       }
     });
   }, [
-    colorMap,
     height,
     monthWidth,
     owners,
