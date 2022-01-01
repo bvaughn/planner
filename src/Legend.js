@@ -4,12 +4,19 @@ import { getColorForString } from "./utils/color";
 import styles from "./Legend.module.css";
 
 export default function Legend({ team, tasks }) {
-  const ownerNamesArray = useMemo(() => {
+  const [namesArray, nameToAvatarMap] = useMemo(() => {
+    const map = new Map();
     const set = new Set();
+
     for (let key in team) {
       const owner = team[key];
-      if (owner.name) {
-        set.add(owner.name.toLowerCase());
+      const name = owner.name?.toLowerCase();
+
+      if (name) {
+        set.add(name);
+        if (owner.avatar) {
+          map.set(name, owner.avatar);
+        }
       }
     }
 
@@ -22,20 +29,27 @@ export default function Legend({ team, tasks }) {
       }
     }
 
-    return Array.from(set);
+    return [Array.from(set), map];
   }, [team, tasks]);
 
   return (
     <ul className={styles.List} data-testname="Legend-list">
-      {ownerNamesArray.sort().map((name) => (
-        <li key={name} className={styles.ListItem}>
-          <span
-            className={styles.Chip}
-            style={{ backgroundColor: getColorForString(name) }}
-          ></span>{" "}
-          <span className={styles.ItemName}>{name}</span>
-        </li>
-      ))}
+      {namesArray.sort().map((name) => {
+        const avatar = nameToAvatarMap.get(name);
+        return (
+          <li key={name} className={styles.ListItem}>
+            <span
+              className={styles.ColorChip}
+              style={{ backgroundColor: getColorForString(name) }}
+            >
+              {avatar && (
+                <img className={styles.AvatarImage} src={avatar} alt="Avatar" />
+              )}
+            </span>{" "}
+            <span className={styles.ItemName}>{name}</span>
+          </li>
+        );
+      })}
     </ul>
   );
 }

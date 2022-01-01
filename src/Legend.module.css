@@ -26,12 +26,18 @@
   margin-right: 0;
 }
 
-.Chip {
-  height: 1rem;
-  width: 1rem;
-  border-radius: 0.25rem;
+.ColorChip {
+  height: 1.5rem;
+  width: 1.5rem;
+  border-radius: 1.5rem;
   display: inline-block;
   margin-right: 0.25rem;
+  overflow: hidden;
+}
+
+.AvatarImage {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .ItemName {
