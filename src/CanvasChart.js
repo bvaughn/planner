@@ -390,7 +390,7 @@ function drawTaskBar(context, task, rowIndex, color, chartWidth) {
         context,
         chunkX,
         barRect.y,
-        Math.min(chunkWidth, chartWidth - chunkX),
+        Math.min(chunkWidth, taskRect.x + taskRect.width - chunkX),
         barRect.height,
         CORNER_RADIUS
       );

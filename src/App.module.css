@@ -7,7 +7,6 @@
   display: flex;
   flex-direction: column;
   padding: 1rem;
-  background: #eee;
   border: 1px solid #eee;
   border-radius: 1rem;
 }
@@ -28,7 +27,6 @@
   margin-top: 0.5rem;
   display: flex;
   flex-direction: row;
-  min-height: 200px;
 }
 
 .CodeHeader {
@@ -78,6 +76,12 @@
 
   .CodeColumnRight {
     max-height: calc(35% - 0.5rem);
+  }
+}
+
+@media only screen and (orientation: landscape) and (max-height: 500px) {
+  .CodeContainer {
+    display: none;
   }
 }
 

@@ -5,6 +5,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   font-size: 12px;
   touch-action: pan-y;
+  background: #eee;
 }
 
 code {
@@ -13,4 +14,10 @@ code {
 
 * {
   box-sizing: border-box;
+}
+
+@media only print {
+  body {
+    background: transparent;
+  }
 }
