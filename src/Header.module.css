@@ -42,3 +42,10 @@
   cursor: default;
   opacity: 0.5;
 }
+
+@media only print {
+  .LeftContainer,
+  .RightContainer {
+    display: none;
+  }
+}

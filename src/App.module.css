@@ -76,3 +76,13 @@
     max-height: calc(35% - 0.5rem);
   }
 }
+
+@media only print {
+  .App {
+    background: transparent;
+  }
+
+  .CodeContainer {
+    display: none;
+  }
+}
