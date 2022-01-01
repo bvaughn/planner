@@ -5,7 +5,7 @@ import CanvasChart from "./CanvasChart";
 import CodeEditor from "./CodeEditor";
 import Header from "./Header";
 import { parseCode, stringifyObject } from "./utils/parsing";
-import { team as initialOwners, tasks as initialTasks } from "./tasks";
+import { team as initialOwners, tasks as initialTasks } from "./data";
 import useURLData from "./hooks/useURLData";
 import styles from "./App.module.css";
 

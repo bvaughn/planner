@@ -9,22 +9,25 @@ import {
 import { getColorForString, getContrastRatio } from "./utils/color";
 import { getOwnerName } from "./utils/task";
 
-const MONTHS = ["January", "February", "March", "April", "May", "June"];
-
-const MARGIN = 4;
-const LINE_WIDTH = 1;
-const CORNER_RADIUS = 3;
-const AVATAR_SIZE = 24;
-
-const HEADER_HEIGHT = 20;
-const TASK_BAR_HEIGHT = 8;
-const TASK_ROW_HEIGHT =
-  MARGIN + AVATAR_SIZE + MARGIN + TASK_BAR_HEIGHT + MARGIN;
-
-const LINE_SEGMENT_MIN_LENGTH = 20;
-const ARROW_SIZE = 10;
-
-const TOOLTIP_OFFSET = 15;
+import {
+  ARROW_SIZE,
+  AVATAR_SIZE,
+  BLACK,
+  BLACK_TRANSPARENT,
+  CORNER_RADIUS,
+  DARK_GRAY,
+  HEADER_HEIGHT,
+  LIGHT_GRAY,
+  LINE_SEGMENT_MIN_LENGTH,
+  LINE_WIDTH,
+  MARGIN,
+  MONTHS,
+  SLATE_GRAY,
+  TASK_BAR_HEIGHT,
+  TASK_ROW_HEIGHT,
+  TOOLTIP_OFFSET,
+  WHITE,
+} from "./config";
 
 const DEFAULT_TOOLTIP_STATE = {
   label: null,
@@ -63,9 +66,9 @@ export default function CanvasChart({
           if (currentTask.id === task.dependency) {
             move = true;
           } else if (currentTask.dependency === task.dependency) {
-            if (task.month > currentTask.month) {
+            if (task.start > currentTask.start) {
               move = true;
-            } else if (task.month === currentTask.month) {
+            } else if (task.start === currentTask.start) {
               if (task.duration < currentTask.duration) {
                 move = true;
               } else if (!task.isOngoing && currentTask.isOngoing) {
@@ -106,8 +109,8 @@ export default function CanvasChart({
             }
             if (
               !(
-                task.month + task.length <= rowTask.month ||
-                task.month >= rowTask.month + rowTask.length
+                task.start + task.duration <= rowTask.start ||
+                task.start >= rowTask.start + rowTask.duration
               )
             ) {
               match = false;
@@ -151,160 +154,29 @@ export default function CanvasChart({
 
     // Draw background grid first.
     // This marks off months and weeks.
-    for (let index = 0; index < 6; index++) {
-      // For simplification purposes, we pretend a month has 4 weeks.
-      for (let weekIndex = 0; weekIndex < 4; weekIndex++) {
-        const x = index * monthWidth + weekIndex * 0.25 * monthWidth;
-        const y = HEADER_HEIGHT + MARGIN;
-
-        context.beginPath();
-        context.strokeStyle = "#eee";
-        context.lineWidth = LINE_WIDTH;
-        context.moveTo(x, y);
-        context.lineTo(x, height);
-        context.stroke();
-      }
-    }
+    drawUnitGrid(context, width, height);
 
     // Render header text for month columns.
-    for (let index = 0; index < 6; index++) {
-      const text = MONTHS[index];
-
-      const x = index * monthWidth;
-      const y = MARGIN;
-      const width = monthWidth;
-      const height = HEADER_HEIGHT;
-
-      context.font = "bold 13px sans-serif";
-      context.fillStyle = "#333";
-      drawTextToFitWidth(context, text, x, y, width, height);
-    }
+    drawUnitHeaders(context, width);
 
     const dependenciesMap = new Map();
     const taskMap = new Map();
 
     for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
       const task = tasks[taskIndex];
-      const owner = team[task.owner];
-      const avatar = ownerToImageMap.get(owner) || null;
-
-      const ownerName = getOwnerName(task, team);
-      const color = getColorForString(ownerName);
-
       const rowIndex = taskToRowIndexMap.get(task);
 
-      // Render task rects.
-      const taskX = task.month * monthWidth;
-      const taskY =
-        HEADER_HEIGHT +
-        rowIndex * TASK_ROW_HEIGHT +
-        TASK_ROW_HEIGHT -
-        TASK_BAR_HEIGHT;
-      const taskWidth = task.isOngoing
-        ? width - taskX - MARGIN
-        : task.length * monthWidth - MARGIN;
-      const taskHeight = TASK_BAR_HEIGHT;
-
-      drawRoundedRect(
+      drawTaskRow(
         context,
-        taskX,
-        taskY,
-        taskWidth,
-        taskHeight,
-        CORNER_RADIUS
-      );
-      context.fillStyle = task.isOngoing ? "rgba(0,0,0,.05)" : color;
-      context.fill();
-
-      if (task.isOngoing) {
-        const chunkWidth =
-          (task.length * monthWidth) / (MONTHS.length - task.month);
-
-        for (
-          let chunkIndex = task.month;
-          chunkIndex < MONTHS.length;
-          chunkIndex++
-        ) {
-          const chunkX = chunkIndex * monthWidth;
-
-          drawRoundedRect(
-            context,
-            chunkX,
-            taskY,
-            chunkWidth,
-            taskHeight,
-            CORNER_RADIUS
-          );
-          context.fillStyle = color;
-          context.fill();
-        }
-      }
-
-      // Render task owner avatars and labels.
-      const textWidth = taskWidth - AVATAR_SIZE - MARGIN;
-      const textHeight = AVATAR_SIZE;
-      const textX = taskX + AVATAR_SIZE + MARGIN;
-      const textY = taskY - textHeight - MARGIN;
-
-      if (avatar?.image != null) {
-        drawAvatarCircle(
-          context,
-          avatar,
-          taskX,
-          taskY - MARGIN - AVATAR_SIZE,
-          AVATAR_SIZE
-        );
-      } else {
-        context.fillStyle = color;
-
-        drawRoundedRect(
-          context,
-          taskX,
-          taskY - MARGIN - AVATAR_SIZE,
-          AVATAR_SIZE,
-          AVATAR_SIZE,
-          AVATAR_SIZE / 2
-        );
-
-        context.fill();
-
-        const ownerName = getOwnerName(task, team);
-        const character = ownerName.charAt(0).toUpperCase();
-
-        context.font = "bold 15px sans-serif";
-        context.fillStyle =
-          getContrastRatio(color, "#ffffff") > getContrastRatio(color, "#000")
-            ? "#fff"
-            : "#000";
-        drawTextToCenterWithin(
-          context,
-          character,
-          taskX,
-          taskY - MARGIN - AVATAR_SIZE,
-          AVATAR_SIZE,
-          AVATAR_SIZE
-        );
-      }
-
-      context.font = "11px sans-serif";
-      context.fillStyle = "#333";
-      const measuredTextWidth = drawTextToFitWidth(
-        context,
-        task.name,
-        textX,
-        textY,
-        textWidth,
-        textHeight
+        task,
+        team,
+        rowIndex,
+        width,
+        ownerToImageMap,
+        textDOMRects
       );
 
-      if (measuredTextWidth !== null) {
-        textDOMRects.set(
-          task.name,
-          new DOMRect(textX, textY, measuredTextWidth, textHeight)
-        );
-      }
-
-      // Register dependencies for later.
+      // Collect dependencies for later.
       taskMap.set(task.id, task);
       if (task.dependency != null) {
         const dependencyId = task.dependency;
@@ -325,88 +197,13 @@ export default function CanvasChart({
 
     // Draw arrows between dependencies.
     dependenciesMap.forEach((dependentTasks, parentTask) => {
-      let firstTask = null;
-      let lowestTask = null;
-
-      for (let i = 0; i < dependentTasks.length; i++) {
-        const dependantTask = dependentTasks[i];
-
-        if (firstTask === null) {
-          firstTask = dependantTask;
-        } else if (firstTask.month > dependantTask.month) {
-          firstTask = dependantTask;
-        }
-
-        if (lowestTask === null) {
-          lowestTask = dependantTask;
-        } else if (
-          taskToRowIndexMap.get(lowestTask) <
-          taskToRowIndexMap.get(dependantTask)
-        ) {
-          lowestTask = dependantTask;
-        }
-      }
-
-      if (firstTask == null || lowestTask == null) {
-        return;
-      }
-
-      const maxX =
-        firstTask.month * monthWidth - MARGIN - LINE_SEGMENT_MIN_LENGTH;
-      const minX = parentTask.month * monthWidth + MARGIN;
-      const x = Math.max(
-        minX,
-        Math.min(
-          maxX,
-          parentTask.month * monthWidth + (parentTask.length * monthWidth) / 2
-        )
+      drawDependencyConnections(
+        context,
+        dependentTasks,
+        parentTask,
+        width,
+        taskToRowIndexMap
       );
-
-      const y0 =
-        HEADER_HEIGHT +
-        taskToRowIndexMap.get(parentTask) * TASK_ROW_HEIGHT +
-        TASK_ROW_HEIGHT +
-        MARGIN;
-      const y1 =
-        HEADER_HEIGHT +
-        taskToRowIndexMap.get(lowestTask) * TASK_ROW_HEIGHT +
-        TASK_ROW_HEIGHT -
-        MARGIN;
-
-      // Draw vertical line from parent task down.
-      // This assumes that each sub-task is on its own row.
-      // TODO Verify that and draw multiple vertical connecting lines if necessary.
-      context.beginPath();
-      context.strokeStyle = "#c2d0df";
-      context.lineWidth = LINE_WIDTH;
-      context.moveTo(x, y0);
-      context.lineTo(x, y1);
-      context.stroke();
-
-      // Draw horizontal lines (with arrows) to connect each dependent task.
-      for (let i = 0; i < dependentTasks.length; i++) {
-        const dependantTask = dependentTasks[i];
-
-        const x0 = x;
-        const x1 = dependantTask.month * monthWidth - MARGIN;
-        const y =
-          HEADER_HEIGHT +
-          taskToRowIndexMap.get(dependantTask) * TASK_ROW_HEIGHT +
-          TASK_ROW_HEIGHT -
-          TASK_BAR_HEIGHT +
-          TASK_BAR_HEIGHT / 2;
-
-        context.beginPath();
-        context.strokeStyle = "#c2d0df";
-        context.lineWidth = LINE_WIDTH;
-        context.moveTo(x0, y);
-        context.lineTo(x1, y);
-        context.moveTo(x1, y);
-        context.lineTo(x1 - ARROW_SIZE / 3, y - ARROW_SIZE / 3);
-        context.moveTo(x1, y);
-        context.lineTo(x1 - ARROW_SIZE / 3, y + ARROW_SIZE / 3);
-        context.stroke();
-      }
     });
   }, [
     height,
@@ -463,4 +260,320 @@ export default function CanvasChart({
       <Tooltip {...tooltipState} />
     </>
   );
+}
+
+function getTaskRect(task, rowIndex, chartWidth) {
+  // TODO Hadle other types of duration (e.g. day, week) in the future.
+  const unitWidth = chartWidth / MONTHS.length;
+
+  const x = task.start * unitWidth;
+  const y = HEADER_HEIGHT + MARGIN + rowIndex * TASK_ROW_HEIGHT + MARGIN;
+  const width = task.isOngoing
+    ? chartWidth - x - MARGIN
+    : task.duration * unitWidth - MARGIN;
+  const height = TASK_ROW_HEIGHT;
+
+  return new DOMRect(x, y, width, height);
+}
+
+function getBarRect(task, rowIndex, chartWidth) {
+  const taskRect = getTaskRect(task, rowIndex, chartWidth);
+
+  return new DOMRect(
+    taskRect.x,
+    taskRect.y + AVATAR_SIZE + MARGIN,
+    taskRect.width,
+    TASK_BAR_HEIGHT
+  );
+}
+
+function getTextRect(taskRect) {
+  const width = taskRect.width - AVATAR_SIZE - MARGIN;
+  const height = AVATAR_SIZE;
+  const x = taskRect.x + AVATAR_SIZE + MARGIN;
+  const y = taskRect.y - height - MARGIN;
+
+  return new DOMRect(x, y, width, height);
+}
+
+function drawOwnerAvatar(context, taskRect, ownerName, color, avatar) {
+  if (avatar?.image) {
+    drawAvatarCircle(context, avatar, taskRect.x, taskRect.y, AVATAR_SIZE);
+  } else {
+    const character = ownerName.charAt(0).toUpperCase();
+
+    drawRoundedRect(
+      context,
+      taskRect.x,
+      taskRect.y,
+      AVATAR_SIZE,
+      AVATAR_SIZE,
+      AVATAR_SIZE / 2
+    );
+    context.fillStyle = color;
+    context.fill();
+
+    context.font = "bold 15px sans-serif";
+    context.fillStyle =
+      getContrastRatio(color, WHITE) > getContrastRatio(color, BLACK)
+        ? WHITE
+        : BLACK;
+    drawTextToCenterWithin(
+      context,
+      character,
+      taskRect.x,
+      taskRect.y,
+      AVATAR_SIZE,
+      AVATAR_SIZE
+    );
+  }
+}
+
+function drawTaskText(context, task, taskRect, textDOMRects) {
+  const textRect = new DOMRect(
+    taskRect.x + AVATAR_SIZE + MARGIN,
+    taskRect.y,
+    taskRect.width - AVATAR_SIZE - MARGIN,
+    AVATAR_SIZE
+  );
+
+  context.font = "11px sans-serif";
+  context.fillStyle = DARK_GRAY;
+
+  const measuredTextWidth = drawTextToFitWidth(
+    context,
+    task.name,
+    textRect.x,
+    textRect.y,
+    textRect.width,
+    textRect.height
+  );
+
+  if (measuredTextWidth !== null) {
+    textDOMRects.set(
+      task.name,
+      new DOMRect(textRect.x, textRect.y, measuredTextWidth, textRect.height)
+    );
+  }
+}
+
+function drawTaskBar(context, task, rowIndex, color, chartWidth) {
+  const taskRect = getTaskRect(task, rowIndex, chartWidth);
+  const barRect = getBarRect(task, rowIndex, chartWidth);
+
+  if (task.isOngoing) {
+    drawRoundedRect(
+      context,
+      barRect.x,
+      barRect.y,
+      barRect.width,
+      barRect.height,
+      CORNER_RADIUS
+    );
+    context.fillStyle = BLACK_TRANSPARENT;
+    context.fill();
+
+    // TODO Hadle other types of duration (e.g. day, week) in the future.
+    const unitWidth = chartWidth / MONTHS.length;
+    const chunkWidth =
+      (task.duration * unitWidth) / (MONTHS.length - task.start);
+
+    for (
+      let chunkIndex = task.start;
+      chunkIndex < MONTHS.length;
+      chunkIndex++
+    ) {
+      const chunkX = chunkIndex * unitWidth;
+
+      drawRoundedRect(
+        context,
+        chunkX,
+        barRect.y,
+        chunkWidth,
+        barRect.height,
+        CORNER_RADIUS
+      );
+      context.fillStyle = color;
+      context.fill();
+    }
+  } else {
+    drawRoundedRect(
+      context,
+      barRect.x,
+      barRect.y,
+      barRect.width,
+      barRect.height,
+      CORNER_RADIUS
+    );
+    context.fillStyle = color;
+    context.fill();
+  }
+}
+
+function drawTaskRow(
+  context,
+  task,
+  team,
+  rowIndex,
+  chartWidth,
+  ownerToImageMap,
+  textDOMRects
+) {
+  const ownerName = getOwnerName(task, team);
+  const color = getColorForString(ownerName);
+
+  const taskRect = getTaskRect(task, rowIndex, chartWidth);
+  const barRect = new DOMRect(
+    taskRect.x,
+    taskRect.y + AVATAR_SIZE + MARGIN,
+    taskRect.width,
+    TASK_BAR_HEIGHT
+  );
+
+  const owner = team[task.owner];
+  const avatar = ownerToImageMap.get(owner);
+
+  drawOwnerAvatar(context, taskRect, ownerName, color, avatar);
+  drawTaskText(context, task, taskRect, textDOMRects);
+  drawTaskBar(context, task, rowIndex, color, chartWidth);
+}
+
+function drawUnitGrid(context, chartWidth, chartHeight) {
+  // TODO Hadle other types of duration (e.g. day, week) in the future.
+  const unitWidth = chartWidth / MONTHS.length;
+
+  // Draw background grid first.
+  // This marks off months and weeks.
+  for (let index = 0; index < 6; index++) {
+    // For simplification purposes, we pretend a month has 4 weeks.
+    for (let weekIndex = 0; weekIndex < 4; weekIndex++) {
+      const x = index * unitWidth + weekIndex * 0.25 * unitWidth;
+      const y = HEADER_HEIGHT + MARGIN;
+
+      context.beginPath();
+      context.strokeStyle = LIGHT_GRAY;
+      context.lineWidth = LINE_WIDTH;
+      context.moveTo(x, y);
+      context.lineTo(x, chartHeight);
+      context.stroke();
+    }
+  }
+}
+
+function drawUnitHeaders(context, chartWidth) {
+  // TODO Hadle other types of duration (e.g. day, week) in the future.
+  const unitWidth = chartWidth / MONTHS.length;
+
+  // Render header text for month columns.
+  for (let index = 0; index < 6; index++) {
+    const text = MONTHS[index];
+
+    const x = index * unitWidth;
+    const y = MARGIN;
+    const width = unitWidth;
+    const height = HEADER_HEIGHT;
+
+    context.font = "bold 13px sans-serif";
+    context.fillStyle = DARK_GRAY;
+    drawTextToFitWidth(context, text, x, y, width, height);
+  }
+}
+
+function drawDependencyConnections(
+  context,
+  dependentTasks,
+  parentTask,
+  chartWidth,
+  taskToRowIndexMap
+) {
+  let firstTask = null;
+  let lowestTask = null;
+
+  for (let i = 0; i < dependentTasks.length; i++) {
+    const dependantTask = dependentTasks[i];
+
+    if (firstTask === null) {
+      firstTask = dependantTask;
+    } else if (firstTask.start > dependantTask.start) {
+      firstTask = dependantTask;
+    }
+
+    if (lowestTask === null) {
+      lowestTask = dependantTask;
+    } else if (
+      taskToRowIndexMap.get(lowestTask) < taskToRowIndexMap.get(dependantTask)
+    ) {
+      lowestTask = dependantTask;
+    }
+  }
+
+  if (firstTask == null || lowestTask == null) {
+    return;
+  }
+
+  const firstBarRect = getBarRect(
+    firstTask,
+    taskToRowIndexMap.get(firstTask),
+    chartWidth
+  );
+  const lowestBarRect = getBarRect(
+    lowestTask,
+    taskToRowIndexMap.get(lowestTask),
+    chartWidth
+  );
+  const parentBarRect = getBarRect(
+    parentTask,
+    taskToRowIndexMap.get(parentTask),
+    chartWidth
+  );
+
+  const x = Math.max(
+    parentBarRect.x + MARGIN,
+    Math.min(
+      firstBarRect.x - LINE_SEGMENT_MIN_LENGTH - MARGIN,
+      // Ideal target alignment:
+      parentBarRect.x + parentBarRect.width / 2
+    )
+  );
+
+  const y0 = parentBarRect.y + parentBarRect.height + MARGIN;
+  const y1 = lowestBarRect.y + lowestBarRect.height / 2;
+
+  // Draw vertical line from parent task down.
+  // This assumes that each sub-task is on its own row.
+  // TODO Verify that and draw multiple vertical connecting lines if necessary.
+  context.beginPath();
+  context.strokeStyle = SLATE_GRAY;
+  context.lineWidth = LINE_WIDTH;
+  context.moveTo(x, y0);
+  context.lineTo(x, y1);
+  context.stroke();
+
+  // TODO Hadle other types of duration (e.g. day, week) in the future.
+  const unitWidth = chartWidth / MONTHS.length;
+
+  // Draw horizontal lines (with arrows) to connect each dependent task.
+  for (let i = 0; i < dependentTasks.length; i++) {
+    const dependantTask = dependentTasks[i];
+    const dependantBarRect = getBarRect(
+      dependantTask,
+      taskToRowIndexMap.get(dependantTask),
+      chartWidth
+    );
+
+    const x0 = x;
+    const x1 = dependantBarRect.x - MARGIN;
+    const y = dependantBarRect.y + dependantBarRect.height / 2;
+
+    context.beginPath();
+    context.strokeStyle = SLATE_GRAY;
+    context.lineWidth = LINE_WIDTH;
+    context.moveTo(x0, y);
+    context.lineTo(x1, y);
+    context.moveTo(x1, y);
+    context.lineTo(x1 - ARROW_SIZE / 3, y - ARROW_SIZE / 3);
+    context.moveTo(x1, y);
+    context.lineTo(x1 - ARROW_SIZE / 3, y + ARROW_SIZE / 3);
+    context.stroke();
+  }
 }
