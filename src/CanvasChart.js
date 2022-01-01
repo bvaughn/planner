@@ -262,12 +262,15 @@ export default function CanvasChart({
   );
 }
 
+function getUnitWidth(chartWidth) {
+  return Math.floor(chartWidth / MONTHS.length);
+}
+
 function getTaskRect(task, rowIndex, chartWidth) {
-  // TODO Hadle other types of duration (e.g. day, week) in the future.
-  const unitWidth = chartWidth / MONTHS.length;
+  const unitWidth = getUnitWidth(chartWidth);
 
   const x = task.start * unitWidth;
-  const y = HEADER_HEIGHT + MARGIN + rowIndex * TASK_ROW_HEIGHT + MARGIN;
+  const y = HEADER_HEIGHT + MARGIN + rowIndex * TASK_ROW_HEIGHT;
   const width = task.isOngoing
     ? chartWidth - x - MARGIN
     : task.duration * unitWidth - MARGIN;
@@ -276,38 +279,42 @@ function getTaskRect(task, rowIndex, chartWidth) {
   return new DOMRect(x, y, width, height);
 }
 
-function getBarRect(task, rowIndex, chartWidth) {
-  const taskRect = getTaskRect(task, rowIndex, chartWidth);
-
+function getBarRect(taskRect) {
   return new DOMRect(
     taskRect.x,
-    taskRect.y + AVATAR_SIZE + MARGIN,
+    taskRect.y + taskRect.height - TASK_BAR_HEIGHT - MARGIN,
     taskRect.width,
     TASK_BAR_HEIGHT
   );
+}
+
+function getAvatarRect(taskRect) {
+  return new DOMRect(taskRect.x, taskRect.y + MARGIN, AVATAR_SIZE, AVATAR_SIZE);
 }
 
 function getTextRect(taskRect) {
   const width = taskRect.width - AVATAR_SIZE - MARGIN;
   const height = AVATAR_SIZE;
   const x = taskRect.x + AVATAR_SIZE + MARGIN;
-  const y = taskRect.y - height - MARGIN;
+  const y = taskRect.y + MARGIN;
 
   return new DOMRect(x, y, width, height);
 }
 
 function drawOwnerAvatar(context, taskRect, ownerName, color, avatar) {
+  const avatarRect = getAvatarRect(taskRect);
+
   if (avatar?.image) {
-    drawAvatarCircle(context, avatar, taskRect.x, taskRect.y, AVATAR_SIZE);
+    drawAvatarCircle(context, avatar, avatarRect.x, avatarRect.y, AVATAR_SIZE);
   } else {
     const character = ownerName.charAt(0).toUpperCase();
 
     drawRoundedRect(
       context,
-      taskRect.x,
-      taskRect.y,
-      AVATAR_SIZE,
-      AVATAR_SIZE,
+      avatarRect.x,
+      avatarRect.y,
+      avatarRect.width,
+      avatarRect.height,
       AVATAR_SIZE / 2
     );
     context.fillStyle = color;
@@ -321,21 +328,16 @@ function drawOwnerAvatar(context, taskRect, ownerName, color, avatar) {
     drawTextToCenterWithin(
       context,
       character,
-      taskRect.x,
-      taskRect.y,
-      AVATAR_SIZE,
-      AVATAR_SIZE
+      avatarRect.x,
+      avatarRect.y,
+      avatarRect.width,
+      avatarRect.height
     );
   }
 }
 
 function drawTaskText(context, task, taskRect, textDOMRects) {
-  const textRect = new DOMRect(
-    taskRect.x + AVATAR_SIZE + MARGIN,
-    taskRect.y,
-    taskRect.width - AVATAR_SIZE - MARGIN,
-    AVATAR_SIZE
-  );
+  const textRect = getTextRect(taskRect);
 
   context.font = "11px sans-serif";
   context.fillStyle = DARK_GRAY;
@@ -359,7 +361,7 @@ function drawTaskText(context, task, taskRect, textDOMRects) {
 
 function drawTaskBar(context, task, rowIndex, color, chartWidth) {
   const taskRect = getTaskRect(task, rowIndex, chartWidth);
-  const barRect = getBarRect(task, rowIndex, chartWidth);
+  const barRect = getBarRect(taskRect);
 
   if (task.isOngoing) {
     drawRoundedRect(
@@ -373,8 +375,7 @@ function drawTaskBar(context, task, rowIndex, color, chartWidth) {
     context.fillStyle = BLACK_TRANSPARENT;
     context.fill();
 
-    // TODO Hadle other types of duration (e.g. day, week) in the future.
-    const unitWidth = chartWidth / MONTHS.length;
+    const unitWidth = getUnitWidth(chartWidth);
     const chunkWidth =
       (task.duration * unitWidth) / (MONTHS.length - task.start);
 
@@ -389,7 +390,7 @@ function drawTaskBar(context, task, rowIndex, color, chartWidth) {
         context,
         chunkX,
         barRect.y,
-        chunkWidth,
+        Math.min(chunkWidth, chartWidth - chunkX),
         barRect.height,
         CORNER_RADIUS
       );
@@ -423,12 +424,7 @@ function drawTaskRow(
   const color = getColorForString(ownerName);
 
   const taskRect = getTaskRect(task, rowIndex, chartWidth);
-  const barRect = new DOMRect(
-    taskRect.x,
-    taskRect.y + AVATAR_SIZE + MARGIN,
-    taskRect.width,
-    TASK_BAR_HEIGHT
-  );
+  const barRect = getBarRect(taskRect);
 
   const owner = team[task.owner];
   const avatar = ownerToImageMap.get(owner);
@@ -439,8 +435,7 @@ function drawTaskRow(
 }
 
 function drawUnitGrid(context, chartWidth, chartHeight) {
-  // TODO Hadle other types of duration (e.g. day, week) in the future.
-  const unitWidth = chartWidth / MONTHS.length;
+  const unitWidth = getUnitWidth(chartWidth);
 
   // Draw background grid first.
   // This marks off months and weeks.
@@ -461,8 +456,7 @@ function drawUnitGrid(context, chartWidth, chartHeight) {
 }
 
 function drawUnitHeaders(context, chartWidth) {
-  // TODO Hadle other types of duration (e.g. day, week) in the future.
-  const unitWidth = chartWidth / MONTHS.length;
+  const unitWidth = getUnitWidth(chartWidth);
 
   // Render header text for month columns.
   for (let index = 0; index < 6; index++) {
@@ -512,19 +506,13 @@ function drawDependencyConnections(
   }
 
   const firstBarRect = getBarRect(
-    firstTask,
-    taskToRowIndexMap.get(firstTask),
-    chartWidth
+    getTaskRect(firstTask, taskToRowIndexMap.get(firstTask), chartWidth)
   );
   const lowestBarRect = getBarRect(
-    lowestTask,
-    taskToRowIndexMap.get(lowestTask),
-    chartWidth
+    getTaskRect(lowestTask, taskToRowIndexMap.get(lowestTask), chartWidth)
   );
   const parentBarRect = getBarRect(
-    parentTask,
-    taskToRowIndexMap.get(parentTask),
-    chartWidth
+    getTaskRect(parentTask, taskToRowIndexMap.get(parentTask), chartWidth)
   );
 
   const x = Math.max(
@@ -549,16 +537,17 @@ function drawDependencyConnections(
   context.lineTo(x, y1);
   context.stroke();
 
-  // TODO Hadle other types of duration (e.g. day, week) in the future.
-  const unitWidth = chartWidth / MONTHS.length;
+  const unitWidth = getUnitWidth(chartWidth);
 
   // Draw horizontal lines (with arrows) to connect each dependent task.
   for (let i = 0; i < dependentTasks.length; i++) {
     const dependantTask = dependentTasks[i];
     const dependantBarRect = getBarRect(
-      dependantTask,
-      taskToRowIndexMap.get(dependantTask),
-      chartWidth
+      getTaskRect(
+        dependantTask,
+        taskToRowIndexMap.get(dependantTask),
+        chartWidth
+      )
     );
 
     const x0 = x;
