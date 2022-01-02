@@ -5,14 +5,14 @@ const { getUrlForData } = require("./url-utils");
 
 const tasks = [
   {
-    month: 0,
-    length: 1,
+    start: 0,
+    duration: 1,
     owner: "bvaughn",
     name: "Brian's project",
   },
   {
-    month: 2,
-    length: 3,
+    start: 2,
+    duration: 3,
     owner: "team",
     name: "Team project",
   },
