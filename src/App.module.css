@@ -25,38 +25,43 @@
   flex: 1 1 auto;
   overflow: auto;
   margin-top: 0.5rem;
-  display: flex;
-  flex-direction: row;
+  position: relative;
 }
 
 .CodeColumnLeft,
 .CodeColumnRight {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  justify-content: stretch;
+  position: absolute;
+  top: 0.5rem;
+  bottom: 0.5rem;
 }
 .CodeColumnLeft {
-  flex: 0 1 65%;
-  margin-right: 0.5rem;
+  left: 0.5rem;
+  width: 65%;
 }
 .CodeColumnRight {
-  flex: 0 1 calc(35% - 0.5rem);
+  right: 0.5rem;
+  width: calc(35% - 1.5rem);
 }
 
 @media only screen and (max-width: 800px) {
-  .CodeContainer {
-    flex-direction: column;
+  .CodeColumnLeft,
+  .CodeColumnRight {
+    top: unset;
+    left: unset;
+    right: unset;
+    width: calc(100% - 1rem);
   }
 
   .CodeColumnLeft {
-    margin-right: 0;
-    margin-bottom: 0.5rem;
-    max-height: 65%;
+    top: 0.5rem;
+    height: 65%;
   }
 
   .CodeColumnRight {
-    max-height: calc(35% - 0.5rem);
+    bottom: 0.5rem;
+    height: calc(35% - 1.5rem);
   }
 }
 
