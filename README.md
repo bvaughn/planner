@@ -10,4 +10,4 @@ Plans created with Planner are automatically saved to the URL and can be easily 
 
 ---
 
-If you would like to say thanks for sharing the code though, feel free to buy me a cup of coffee ☕️😃 at [patreon.com/bvaughn](https://www.patreon.com/bvaughn).
+If you like this project ☕️😃 buy me a cup of coffee at [patreon.com/bvaughn](https://www.patreon.com/bvaughn)
