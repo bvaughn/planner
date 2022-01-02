@@ -47,12 +47,14 @@ export default function CanvasChart({
 
   const [tooltipState, setTooltipState] = useState(DEFAULT_TOOLTIP_STATE);
 
-  // eslint-disable-next-line  react-hooks/exhaustive-deps
-  const textDOMRects = useMemo(() => new Map(), [tasks, width]);
-
-  const [taskToRowIndexMap, maxRowIndex] = useMemo(() => {
-    const map = new Map();
+  // Precompute task and team metadata only when these values change.
+  // We redraw when the width changes, but we don't need to recompute these values.
+  const metadata = useMemo(() => {
+    const taskToRowIndexMap = new Map();
     const rows = [];
+
+    const dependenciesMap = new Map();
+    const idToTaskMap = new Map();
 
     // Pre-sort dependencies to always follow parent tasks,
     // and oder them by (start) month index (lowest to highest).
@@ -129,58 +131,13 @@ export default function CanvasChart({
         rows[rowIndex].push(task);
       }
 
-      map.set(task, rowIndex);
-    });
-
-    return [map, rows.length];
-  }, [tasks]);
-
-  const monthWidth = width / MONTHS.length;
-
-  const height = HEADER_HEIGHT + maxRowIndex * TASK_ROW_HEIGHT;
-
-  useLayoutEffect(() => {
-    const canvas = canvasRef.current;
-
-    const scale = window.devicePixelRatio;
-    canvas.width = Math.floor(width * scale);
-    canvas.height = Math.floor(height * scale);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-
-    const context = canvas.getContext("2d");
-    context.scale(scale, scale);
-    context.clearRect(0, 0, width, height);
-
-    // Draw background grid first.
-    // This marks off months and weeks.
-    drawUnitGrid(context, width, height);
-
-    // Render header text for month columns.
-    drawUnitHeaders(context, width);
-
-    const dependenciesMap = new Map();
-    const taskMap = new Map();
-
-    for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
-      const task = tasks[taskIndex];
-      const rowIndex = taskToRowIndexMap.get(task);
-
-      drawTaskRow(
-        context,
-        task,
-        team,
-        rowIndex,
-        width,
-        ownerToImageMap,
-        textDOMRects
-      );
+      taskToRowIndexMap.set(task, rowIndex);
 
       // Collect dependencies for later.
-      taskMap.set(task.id, task);
+      idToTaskMap.set(task.id, task);
       if (task.dependency != null) {
         const dependencyId = task.dependency;
-        const dependency = taskMap.get(dependencyId);
+        const dependency = idToTaskMap.get(dependencyId);
 
         if (dependency == null) {
           console.warn(
@@ -190,37 +147,65 @@ export default function CanvasChart({
           if (!dependenciesMap.has(dependency)) {
             dependenciesMap.set(dependency, []);
           }
-          dependenciesMap.get(dependency).push(taskMap.get(task.id));
+          dependenciesMap.get(dependency).push(idToTaskMap.get(task.id));
         }
       }
+    });
+
+    return {
+      dependenciesMap,
+      maxRowIndex: rows.length,
+      ownerToImageMap,
+      taskToRowIndexMap,
+      tasks,
+      team,
+      textDOMRects: new Map(),
+    };
+  }, [ownerToImageMap, tasks, team]);
+
+  const chartHeight = HEADER_HEIGHT + metadata.maxRowIndex * TASK_ROW_HEIGHT;
+  const chartWidth = width;
+
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current;
+
+    const scale = window.devicePixelRatio;
+    canvas.width = Math.floor(chartWidth * scale);
+    canvas.height = Math.floor(chartHeight * scale);
+    canvas.style.width = `${chartWidth}px`;
+    canvas.style.height = `${chartHeight}px`;
+
+    const context = canvas.getContext("2d");
+    context.scale(scale, scale);
+    context.clearRect(0, 0, chartWidth, chartHeight);
+
+    // Draw background grid first.
+    // This marks off months and weeks.
+    drawUnitGrid(context, chartWidth, chartHeight);
+
+    // Render header text for month columns.
+    drawUnitHeaders(context, chartWidth);
+
+    for (let taskIndex = 0; taskIndex < metadata.tasks.length; taskIndex++) {
+      drawTaskRow(context, taskIndex, metadata, width);
     }
 
     // Draw arrows between dependencies.
-    dependenciesMap.forEach((dependentTasks, parentTask) => {
+    metadata.dependenciesMap.forEach((dependentTasks, parentTask) => {
       drawDependencyConnections(
         context,
         dependentTasks,
         parentTask,
         width,
-        taskToRowIndexMap
+        metadata
       );
     });
-  }, [
-    height,
-    monthWidth,
-    team,
-    ownerToImageMap,
-    preloadCounter,
-    taskToRowIndexMap,
-    tasks,
-    textDOMRects,
-    width,
-  ]);
+  }, [chartHeight, chartWidth, metadata, preloadCounter]);
 
   const handleMouseMove = (event) => {
     const { offsetX, offsetY } = event.nativeEvent;
 
-    for (let [text, rect] of textDOMRects) {
+    for (let [text, rect] of metadata.textDOMRects) {
       if (
         offsetX >= rect.x &&
         offsetX <= rect.x + rect.width &&
@@ -253,7 +238,7 @@ export default function CanvasChart({
     <>
       <canvas
         ref={canvasRef}
-        height={height}
+        height={chartHeight}
         onMouseMove={handleMouseMove}
         width={width}
       />
@@ -336,7 +321,7 @@ function drawOwnerAvatar(context, taskRect, ownerName, color, avatar) {
   }
 }
 
-function drawTaskText(context, task, taskRect, textDOMRects) {
+function drawTaskText(context, task, taskRect, metadata) {
   const textRect = getTextRect(taskRect);
 
   context.font = "11px sans-serif";
@@ -352,15 +337,14 @@ function drawTaskText(context, task, taskRect, textDOMRects) {
   );
 
   if (measuredTextWidth !== null) {
-    textDOMRects.set(
+    metadata.textDOMRects.set(
       task.name,
       new DOMRect(textRect.x, textRect.y, measuredTextWidth, textRect.height)
     );
   }
 }
 
-function drawTaskBar(context, task, rowIndex, color, chartWidth) {
-  const taskRect = getTaskRect(task, rowIndex, chartWidth);
+function drawTaskBar(context, task, taskRect, color, chartWidth) {
   const barRect = getBarRect(taskRect);
 
   if (task.isOngoing) {
@@ -411,27 +395,19 @@ function drawTaskBar(context, task, rowIndex, color, chartWidth) {
   }
 }
 
-function drawTaskRow(
-  context,
-  task,
-  team,
-  rowIndex,
-  chartWidth,
-  ownerToImageMap,
-  textDOMRects
-) {
-  const ownerName = getOwnerName(task, team);
-  const color = getColorForString(ownerName);
-
+function drawTaskRow(context, taskIndex, metadata, chartWidth) {
+  const task = metadata.tasks[taskIndex];
+  const rowIndex = metadata.taskToRowIndexMap.get(task);
   const taskRect = getTaskRect(task, rowIndex, chartWidth);
-  const barRect = getBarRect(taskRect);
 
-  const owner = team[task.owner];
-  const avatar = ownerToImageMap.get(owner);
+  const ownerName = getOwnerName(task, metadata.team);
+  const color = getColorForString(ownerName);
+  const owner = metadata.team[task.owner];
+  const avatar = metadata.ownerToImageMap.get(owner);
 
   drawOwnerAvatar(context, taskRect, ownerName, color, avatar);
-  drawTaskText(context, task, taskRect, textDOMRects);
-  drawTaskBar(context, task, rowIndex, color, chartWidth);
+  drawTaskText(context, task, taskRect, metadata);
+  drawTaskBar(context, task, taskRect, color, chartWidth);
 }
 
 function drawUnitGrid(context, chartWidth, chartHeight) {
@@ -478,7 +454,7 @@ function drawDependencyConnections(
   dependentTasks,
   parentTask,
   chartWidth,
-  taskToRowIndexMap
+  metadata
 ) {
   let firstTask = null;
   let lowestTask = null;
@@ -495,7 +471,8 @@ function drawDependencyConnections(
     if (lowestTask === null) {
       lowestTask = dependantTask;
     } else if (
-      taskToRowIndexMap.get(lowestTask) < taskToRowIndexMap.get(dependantTask)
+      metadata.taskToRowIndexMap.get(lowestTask) <
+      metadata.taskToRowIndexMap.get(dependantTask)
     ) {
       lowestTask = dependantTask;
     }
@@ -506,13 +483,25 @@ function drawDependencyConnections(
   }
 
   const firstBarRect = getBarRect(
-    getTaskRect(firstTask, taskToRowIndexMap.get(firstTask), chartWidth)
+    getTaskRect(
+      firstTask,
+      metadata.taskToRowIndexMap.get(firstTask),
+      chartWidth
+    )
   );
   const lowestBarRect = getBarRect(
-    getTaskRect(lowestTask, taskToRowIndexMap.get(lowestTask), chartWidth)
+    getTaskRect(
+      lowestTask,
+      metadata.taskToRowIndexMap.get(lowestTask),
+      chartWidth
+    )
   );
   const parentBarRect = getBarRect(
-    getTaskRect(parentTask, taskToRowIndexMap.get(parentTask), chartWidth)
+    getTaskRect(
+      parentTask,
+      metadata.taskToRowIndexMap.get(parentTask),
+      chartWidth
+    )
   );
 
   const x = Math.max(
@@ -537,15 +526,13 @@ function drawDependencyConnections(
   context.lineTo(x, y1);
   context.stroke();
 
-  const unitWidth = getUnitWidth(chartWidth);
-
   // Draw horizontal lines (with arrows) to connect each dependent task.
   for (let i = 0; i < dependentTasks.length; i++) {
     const dependantTask = dependentTasks[i];
     const dependantBarRect = getBarRect(
       getTaskRect(
         dependantTask,
-        taskToRowIndexMap.get(dependantTask),
+        metadata.taskToRowIndexMap.get(dependantTask),
         chartWidth
       )
     );
