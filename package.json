@@ -8,6 +8,7 @@
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.5.0",
     "history": "^5.2.0",
+    "jsurl2": "^2.1.0",
     "prism-react-renderer": "^1.2.1",
     "react": "^0.0.0-experimental-3dc41d8a2-20211223",
     "react-dom": "^0.0.0-experimental-3dc41d8a2-20211223",

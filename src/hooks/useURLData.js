@@ -1,4 +1,5 @@
 import { useMemo, useSyncExternalStore } from "react";
+import { parse, stringify } from "jsurl2";
 import history from "history/browser";
 import { saveSearchToHistory, subscribeToHistory } from "../utils/history";
 
@@ -6,7 +7,7 @@ function getSnapshot() {
   try {
     const search = history.location.search;
     if (search) {
-      return window.atob(search.substr(1));
+      return search.substr(1);
     }
   } catch (error) {
     console.error(error);
@@ -15,26 +16,34 @@ function getSnapshot() {
 }
 
 function saveToLocation(data) {
-  const string = JSON.stringify(data);
-  const encoded = window.btoa(string);
+  const stringified = stringify(data);
 
-  saveSearchToHistory(encoded);
+  // Nested apostrophes cause "jsurl2" to throw a parsing error:
+  //   Error: Illegal escape code.
+  // For now, we have to manually escape them.
+  const escaped = stringified.replace(/\*"/g, "%27");
+
+  saveSearchToHistory(escaped);
 }
 
 // Params defaultData and validateCallback should both be stable/memoized
 export default function useURLData(defaultData) {
-  const snapshot = useSyncExternalStore(subscribeToHistory, getSnapshot);
+  const snapshotString = useSyncExternalStore(subscribeToHistory, getSnapshot);
 
   const data = useMemo(() => {
-    try {
-      const parsed = JSON.parse(snapshot);
-      return parsed || defaultData;
-    } catch (error) {
-      console.error(error);
-    } finally {
+    if (snapshotString) {
+      try {
+        // See comment in saveToLocation()
+        const unescaped = snapshotString.replace(/%27/g, '*"');
+        const parsed = parse(unescaped);
+        return parsed || defaultData;
+      } catch (error) {
+        console.error(error);
+      } finally {
+      }
     }
     return defaultData;
-  }, [defaultData, snapshot]);
+  }, [defaultData, snapshotString]);
 
   // No need to mirror in React state; just save to the location.
   // This will trigger a re-render via the useSyncExternalStore subscription.

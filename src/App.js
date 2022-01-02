@@ -33,7 +33,10 @@ export default function App() {
     try {
       const newTasks = parseCode(newString);
       if (newTasks != null && Array.isArray(newTasks)) {
-        setData({ ...data, tasks: newTasks });
+        // Remove empty tasks (e.g. ",," in task string).
+        const filteredTasks = newTasks.filter((task) => task != null);
+
+        setData({ ...data, tasks: filteredTasks });
       }
     } catch (error) {
       // Parsing errors are fine; they're expected while typing.
