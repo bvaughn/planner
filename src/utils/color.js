@@ -36,6 +36,9 @@ export function getContrastRatio(colorA, colorB) {
   );
 }
 
+// TODO Make this array longer; use incoming string to determine array index
+// this way shared plans will always have consistent colors even if their in-memory editing history is different.
+
 let colorIndex = 0;
 const colors = [
   "#363852",

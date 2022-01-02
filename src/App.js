@@ -1,7 +1,6 @@
-import { useLayoutEffect, useMemo, useState } from "react";
-import { ErrorBoundary } from "react-error-boundary";
+import { useMemo } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
-import CanvasChart from "./CanvasChart";
+import Planner from "./Planner";
 import CodeEditor from "./CodeEditor";
 import Header from "./Header";
 import { parseCode, stringifyObject } from "./utils/parsing";
@@ -12,14 +11,9 @@ import styles from "./App.module.css";
 const defaultData = { tasks: initialTasks, team: initialOwners };
 
 export default function App() {
-  const [preloadCounter, setPreloadCounter] = useState(false);
-
   const [data, setData] = useURLData(defaultData);
 
   const { team, tasks } = data;
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const ownerToImageMap = useMemo(() => new Map(), [team]);
 
   const teamString = useMemo(() => stringifyObject(data.team), [data.team]);
   const tasksString = useMemo(() => stringifyObject(data.tasks), [data.tasks]);
@@ -46,16 +40,6 @@ export default function App() {
     }
   };
 
-  // Pre-load images so we can draw avatars to the Canvas.
-  useLayoutEffect(() => {
-    preloadImages(team, ownerToImageMap, () => {
-      // Now that all images have been pre-loaded, re-render and draw them to the Canvas.
-      // Incrementing this counter just lets React know we want to re-render.
-      // The specific count value has no significance.
-      setPreloadCounter((value) => value + 1);
-    });
-  }, [team, ownerToImageMap]);
-
   const resetError = () => {
     setData(defaultData);
   };
@@ -65,19 +49,16 @@ export default function App() {
       <Header team={team} tasks={tasks} />
 
       <div className={styles.ChartContainer}>
-        <ErrorBoundary FallbackComponent={ErrorFallback} onReset={resetError}>
-          <AutoSizer disableHeight>
-            {({ width }) => (
-              <CanvasChart
-                team={team}
-                ownerToImageMap={ownerToImageMap}
-                preloadCounter={preloadCounter}
-                tasks={tasks}
-                width={width}
-              />
-            )}
-          </AutoSizer>
-        </ErrorBoundary>
+        <AutoSizer disableHeight>
+          {({ width }) => (
+            <Planner
+              resetError={resetError}
+              tasks={tasks}
+              team={team}
+              width={width}
+            />
+          )}
+        </AutoSizer>
       </div>
 
       <div className={styles.CodeContainer}>
@@ -100,44 +81,4 @@ export default function App() {
       </div>
     </div>
   );
-}
-
-function ErrorFallback({ error, resetErrorBoundary }) {
-  return (
-    <>
-      <div className={styles.ErrorHeader}>Something went wrong:</div>
-      <pre className={styles.ErrorMessage}>{error.message}</pre>
-      <button onClick={resetErrorBoundary}>Try again</button>
-    </>
-  );
-}
-
-async function preloadImages(team, ownerToImageMap, callback) {
-  const promises = [];
-
-  for (let key in team) {
-    const owner = team[key];
-
-    if (owner?.avatar != null && typeof owner?.avatar === "string") {
-      promises.push(
-        new Promise((resolve) => {
-          const image = new Image();
-          image.onload = () => {
-            ownerToImageMap.set(owner, {
-              height: image.naturalHeight,
-              image,
-              width: image.naturalWidth,
-            });
-
-            resolve();
-          };
-          image.src = owner.avatar;
-        })
-      );
-    }
-  }
-
-  await Promise.all(promises);
-
-  callback();
 }

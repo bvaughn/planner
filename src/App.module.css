@@ -50,19 +50,6 @@
   flex: 0 1 calc(35% - 0.5rem);
 }
 
-.ErrorHeader {
-  color: #a00;
-  font-weight: bold;
-  font-size: 13px;
-}
-
-.ErrorMessage {
-  background-color: #fee;
-  color: #a00;
-  padding: 0.5rem;
-  font-family: monospace;
-}
-
 @media only screen and (max-width: 800px) {
   .CodeContainer {
     flex-direction: column;

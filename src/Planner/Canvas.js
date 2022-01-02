@@ -1,13 +1,13 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import Tooltip from "./Tooltip";
 import {
   drawTextToFitWidth,
   drawTextToCenterWithin,
   drawRoundedRect,
   drawAvatarCircle,
-} from "./utils/canvas";
-import { getColorForString, getContrastRatio } from "./utils/color";
-import { getOwnerName } from "./utils/task";
+} from "../utils/canvas";
+import { getColorForString, getContrastRatio } from "../utils/color";
+import { getOwnerName } from "../utils/task";
 
 import {
   ARROW_SIZE,
@@ -27,7 +27,7 @@ import {
   TASK_ROW_HEIGHT,
   TOOLTIP_OFFSET,
   WHITE,
-} from "./config";
+} from "../config";
 
 const DEFAULT_TOOLTIP_STATE = {
   label: null,
@@ -36,155 +36,39 @@ const DEFAULT_TOOLTIP_STATE = {
   top: null,
 };
 
-export default function CanvasChart({
-  team,
+// Processes data; arguably should be moved into Preloader component.
+export default function Canvas({
+  metadata,
   ownerToImageMap,
-  preloadCounter,
   tasks,
+  team,
   width,
 }) {
+  const height = HEADER_HEIGHT + metadata.maxRowIndex * TASK_ROW_HEIGHT;
+
   const canvasRef = useRef();
 
   const [tooltipState, setTooltipState] = useState(DEFAULT_TOOLTIP_STATE);
-
-  // Precompute task and team metadata only when these values change.
-  // We redraw when the width changes, but we don't need to recompute these values.
-  const metadata = useMemo(() => {
-    const taskToRowIndexMap = new Map();
-    const rows = [];
-
-    const dependenciesMap = new Map();
-    const idToTaskMap = new Map();
-
-    // Pre-sort dependencies to always follow parent tasks,
-    // and oder them by (start) month index (lowest to highest).
-    for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
-      const task = tasks[taskIndex];
-      if (task.dependency != null) {
-        let currentIndex = taskIndex - 1;
-        while (currentIndex >= 0) {
-          const currentTask = tasks[currentIndex];
-          let move = false;
-          if (currentTask.id === task.dependency) {
-            move = true;
-          } else if (currentTask.dependency === task.dependency) {
-            if (task.start > currentTask.start) {
-              move = true;
-            } else if (task.start === currentTask.start) {
-              if (task.duration < currentTask.duration) {
-                move = true;
-              } else if (!task.isOngoing && currentTask.isOngoing) {
-                move = true;
-              }
-            }
-          }
-
-          if (move) {
-            tasks.splice(taskIndex, 1);
-            tasks.splice(currentIndex + 1, 0, task);
-            break;
-          } else {
-            currentIndex--;
-          }
-        }
-      }
-    }
-
-    tasks.forEach((task) => {
-      let nextAvailableRowIndex = -1;
-      if (task.dependency == null) {
-        nextAvailableRowIndex = rows.findIndex((rowTasks, rowIndex) => {
-          let match = true;
-          for (
-            let rowTaskIndex = 0;
-            rowTaskIndex < rowTasks.length;
-            rowTaskIndex++
-          ) {
-            const rowTask = rowTasks[rowTaskIndex];
-            if (rowTask.isOngoing) {
-              match = false;
-              break;
-            }
-            if (rowTask.dependency != null) {
-              match = false;
-              break;
-            }
-            if (
-              !(
-                task.start + task.duration <= rowTask.start ||
-                task.start >= rowTask.start + rowTask.duration
-              )
-            ) {
-              match = false;
-              break;
-            }
-          }
-          return match;
-        });
-      }
-
-      const rowIndex =
-        nextAvailableRowIndex >= 0 ? nextAvailableRowIndex : rows.length;
-      if (rows[rowIndex] == null) {
-        rows[rowIndex] = [task];
-      } else {
-        rows[rowIndex].push(task);
-      }
-
-      taskToRowIndexMap.set(task, rowIndex);
-
-      // Collect dependencies for later.
-      idToTaskMap.set(task.id, task);
-      if (task.dependency != null) {
-        const dependencyId = task.dependency;
-        const dependency = idToTaskMap.get(dependencyId);
-
-        if (dependency == null) {
-          console.warn(
-            `Invalid dependenc; no parent task found with id ${dependencyId}`
-          );
-        } else {
-          if (!dependenciesMap.has(dependency)) {
-            dependenciesMap.set(dependency, []);
-          }
-          dependenciesMap.get(dependency).push(idToTaskMap.get(task.id));
-        }
-      }
-    });
-
-    return {
-      dependenciesMap,
-      maxRowIndex: rows.length,
-      ownerToImageMap,
-      taskToRowIndexMap,
-      tasks,
-      team,
-      textDOMRects: new Map(),
-    };
-  }, [ownerToImageMap, tasks, team]);
-
-  const chartHeight = HEADER_HEIGHT + metadata.maxRowIndex * TASK_ROW_HEIGHT;
-  const chartWidth = width;
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
 
     const scale = window.devicePixelRatio;
-    canvas.width = Math.floor(chartWidth * scale);
-    canvas.height = Math.floor(chartHeight * scale);
-    canvas.style.width = `${chartWidth}px`;
-    canvas.style.height = `${chartHeight}px`;
+    canvas.width = Math.floor(width * scale);
+    canvas.height = Math.floor(height * scale);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
 
     const context = canvas.getContext("2d");
     context.scale(scale, scale);
-    context.clearRect(0, 0, chartWidth, chartHeight);
+    context.clearRect(0, 0, width, height);
 
     // Draw background grid first.
     // This marks off months and weeks.
-    drawUnitGrid(context, chartWidth, chartHeight);
+    drawUnitGrid(context, width, height);
 
     // Render header text for month columns.
-    drawUnitHeaders(context, chartWidth);
+    drawUnitHeaders(context, width);
 
     for (let taskIndex = 0; taskIndex < metadata.tasks.length; taskIndex++) {
       drawTaskRow(context, taskIndex, metadata, width);
@@ -200,7 +84,7 @@ export default function CanvasChart({
         metadata
       );
     });
-  }, [chartHeight, chartWidth, metadata, preloadCounter]);
+  }, [height, metadata, width]);
 
   const handleMouseMove = (event) => {
     const { offsetX, offsetY } = event.nativeEvent;
@@ -238,7 +122,7 @@ export default function CanvasChart({
     <>
       <canvas
         ref={canvasRef}
-        height={chartHeight}
+        height={height}
         onMouseMove={handleMouseMove}
         width={width}
       />
@@ -246,6 +130,10 @@ export default function CanvasChart({
     </>
   );
 }
+
+/////////////////////////////////////////////
+// Canvas drawing helper functions.
+/////////////////////////////////////////////
 
 function getUnitWidth(chartWidth) {
   return Math.floor(chartWidth / MONTHS.length);
