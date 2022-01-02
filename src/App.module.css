@@ -29,12 +29,6 @@
   flex-direction: row;
 }
 
-.CodeHeader {
-  font-size: 13px;
-  font-weight: bold;
-  margin-bottom: 0.25rem;
-}
-
 .CodeColumnLeft,
 .CodeColumnRight {
   display: flex;

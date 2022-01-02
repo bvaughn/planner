@@ -66,17 +66,17 @@ export default function App() {
 
       <div className={styles.CodeContainer}>
         <div className={styles.CodeColumnLeft}>
-          <div className={styles.CodeHeader}>Tasks</div>
           <CodeEditor
             code={tasksString}
+            label="Tasks"
             onChange={handleTasksChange}
             testName="tasks"
           />
         </div>
         <div className={styles.CodeColumnRight}>
-          <div className={styles.CodeHeader}>Team</div>
           <CodeEditor
             code={teamString}
+            label="Team"
             onChange={handleOwnersChange}
             testName="team"
           />

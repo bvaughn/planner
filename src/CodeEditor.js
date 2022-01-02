@@ -3,7 +3,7 @@ import Highlight, { defaultProps } from "prism-react-renderer";
 import theme from "prism-react-renderer/themes/palenight";
 import styles from "./CodeEditor.module.css";
 
-export default function Prism({ code, onChange, testName }) {
+export default function Prism({ code, label, onChange, testName }) {
   const [isFocused, setIsFocused] = useState();
   const textAreaRef = useRef();
 
@@ -36,8 +36,9 @@ export default function Prism({ code, onChange, testName }) {
     }
   };
 
+  let content = null;
   if (isFocused) {
-    return (
+    content = (
       <textarea
         data-testname={`CodeEditor-textarea-${testName}`}
         defaultValue={code}
@@ -48,33 +49,45 @@ export default function Prism({ code, onChange, testName }) {
         spellCheck="false"
       />
     );
+  } else {
+    content = (
+      <Highlight
+        key={code}
+        {...defaultProps}
+        code={code}
+        theme={theme}
+        language="javascript"
+      >
+        {({ className, style, tokens, getLineProps, getTokenProps }) => (
+          <pre
+            className={`${className} ${styles.Pre}`}
+            data-testname={`CodeEditor-pre-${testName}`}
+            onFocus={handleFocus}
+            style={style}
+            tabIndex={0}
+          >
+            {tokens.map((line, i) => (
+              <div {...getLineProps({ line, key: i })}>
+                {line.map((token, key) => (
+                  <span {...getTokenProps({ token, key })} />
+                ))}
+              </div>
+            ))}
+          </pre>
+        )}
+      </Highlight>
+    );
   }
 
   return (
-    <Highlight
-      key={code}
-      {...defaultProps}
-      code={code}
-      theme={theme}
-      language="javascript"
-    >
-      {({ className, style, tokens, getLineProps, getTokenProps }) => (
-        <pre
-          className={`${className} ${styles.Pre}`}
-          data-testname={`CodeEditor-pre-${testName}`}
-          onFocus={handleFocus}
-          style={style}
-          tabIndex={0}
-        >
-          {tokens.map((line, i) => (
-            <div {...getLineProps({ line, key: i })}>
-              {line.map((token, key) => (
-                <span {...getTokenProps({ token, key })} />
-              ))}
-            </div>
-          ))}
-        </pre>
-      )}
-    </Highlight>
+    <>
+      <div className={styles.Header}>
+        <div className={styles.HeaderText}>{label}</div>
+        {isFocused && (
+          <div className={styles.HeaderHint}>(auto-saves on blur)</div>
+        )}
+      </div>
+      {content}
+    </>
   );
 }

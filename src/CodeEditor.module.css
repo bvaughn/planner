@@ -1,3 +1,20 @@
+.Header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.HeaderText {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.HeaderHint {
+  color: #363852;
+  font-size: 11px;
+  margin-left: 0.25rem;
+}
+
 .Pre,
 .TextArea {
   max-height: 100%;
