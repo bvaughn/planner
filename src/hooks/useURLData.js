@@ -18,12 +18,7 @@ function getSnapshot() {
 function saveToLocation(data) {
   const stringified = stringify(data);
 
-  // Nested apostrophes cause "jsurl2" to throw a parsing error:
-  //   Error: Illegal escape code.
-  // For now, we have to manually escape them.
-  const escaped = stringified.replace(/\*"/g, "%27");
-
-  saveSearchToHistory(escaped);
+  saveSearchToHistory(stringified);
 }
 
 // Params defaultData and validateCallback should both be stable/memoized
@@ -33,9 +28,7 @@ export default function useURLData(defaultData) {
   const data = useMemo(() => {
     if (snapshotString) {
       try {
-        // See comment in saveToLocation()
-        const unescaped = snapshotString.replace(/%27/g, '*"');
-        const parsed = parse(unescaped);
+        const parsed = parse(snapshotString, { deURI: true });
 
         // Parsed value should be an object.
         // If it's still a string then parsing was unsuccessful.

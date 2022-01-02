@@ -15,10 +15,21 @@ export function getMaxIndex() {
   return maxIndex;
 }
 
-export function saveSearchToHistory(search) {
-  if (history.location.search === `?${search}`) {
+export function saveSearchToHistory(newSearch) {
+  let prevSearch = history.location.search;
+  if (prevSearch) {
+    // Remove the leading "?"
+    prevSearch = prevSearch.substr(1);
+
+    // Nested apostrophes are auto escaped by the "history" library,
+    // e.g. "jsurl2" serializes `team's` to `team*"s` which "history" converts to `team*%22s`.
+    // We need to manually undo this conversion before comparing new search strings to current ones.
+    prevSearch = prevSearch.replace(/\*%22/g, '*"');
+
     // Don't push a new History entry if the search string hasn't changed.
-    return;
+    if (prevSearch === newSearch) {
+      return;
+    }
   }
 
   const currentIndex = getCurrentIndex();
@@ -26,7 +37,7 @@ export function saveSearchToHistory(search) {
   // Saving a new URL always throws away history after the current state.
   maxIndex = currentIndex + 1;
 
-  history.push({ search }, { index: currentIndex + 1 });
+  history.push({ search: newSearch }, { index: currentIndex + 1 });
 
   // History API events aren't dispatched when JS changes the history,
   // so we use our own event type to signal a re-render is needed.
