@@ -36,10 +36,14 @@ export default function useURLData(defaultData) {
         // See comment in saveToLocation()
         const unescaped = snapshotString.replace(/%27/g, '*"');
         const parsed = parse(unescaped);
-        return parsed || defaultData;
+
+        // Parsed value should be an object.
+        // If it's still a string then parsing was unsuccessful.
+        if (typeof parsed !== "string") {
+          return parsed || defaultData;
+        }
       } catch (error) {
         console.error(error);
-      } finally {
       }
     }
     return defaultData;
