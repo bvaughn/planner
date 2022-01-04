@@ -3,7 +3,7 @@ import { Temporal } from "@js-temporal/polyfill";
 export const MILLISECONDS_IN_DAY = 1000 * 60 * 60 * 24;
 export const MILLISECONDS_IN_WEEK = MILLISECONDS_IN_DAY * 7;
 export const MILLISECONDS_IN_MONTH = MILLISECONDS_IN_DAY * 31; // Rough approximation
-export const MILLISECONDS_IN_YEAR = MILLISECONDS_IN_WEEK * 52;
+export const MILLISECONDS_IN_YEAR = MILLISECONDS_IN_DAY * 365;
 
 export const INTERVAL_UNIT_DAY = "day";
 export const INTERVAL_UNIT_WEEK = "week";

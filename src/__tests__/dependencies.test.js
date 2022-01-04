@@ -1,7 +1,10 @@
 const { test, expect } = require("@playwright/test");
 const config = require("../../playwright.config");
-const { getTestNameInnerText, setEditorText } = require("./page-utils");
-const { getUrlForData } = require("./url-utils");
+const {
+  getTestNameInnerText,
+  loadData,
+  setEditorText,
+} = require("./page-utils");
 
 const tasks = [
   {
@@ -72,13 +75,7 @@ test.describe("Dependencies", () => {
 
     page = await context.newPage();
 
-    const url = getUrlForData({ tasks, team });
-
-    await page.goto(url, {
-      waitUntil: "domcontentloaded",
-    });
-
-    await page.waitForSelector("canvas");
+    await loadData(page, { tasks, team });
   });
 
   test("should be sorted and aligned correctly", async () => {
