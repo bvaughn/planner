@@ -5,8 +5,6 @@ export const LIGHT_GRAY = "#eeeeee";
 export const SLATE_GRAY = "#c2d0df";
 export const WHITE = "#ffffff";
 
-export const MONTHS = ["January", "February", "March", "April", "May", "June"];
-
 export const MARGIN = 4;
 export const LINE_WIDTH = 1;
 export const CORNER_RADIUS = 3;

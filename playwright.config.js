@@ -3,7 +3,7 @@ const config = {
     toMatchSnapshot: {
       // Account for minor difference in e.g. text rendering and resolution
       // between headless and in-browser tests.
-      threshold: 0.75,
+      threshold: 0.5,
     },
   },
 

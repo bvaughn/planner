@@ -15,19 +15,19 @@ let uidCounter = 0;
 
 function createTask({
   dependency, // Task (id) that blocks this one
-  duration, // Number of months
   id = uidCounter++,
   isOngoing = false,
   name,
   owner = "team",
-  start, // Index of month (0-based)
+  start,
+  stop,
 }) {
   const task = {
-    duration,
     id,
     name,
     owner,
     start,
+    stop,
   };
 
   if (isOngoing) {
@@ -44,20 +44,22 @@ function createTask({
 createTask({
   id: "example",
   name: "Design API",
-  start: 0,
-  duration: 2.5,
+  start: "2022-01-01",
+  stop: "2022-03-15",
   owner: "bvaughn",
 });
 createTask({
   name: "Write API documentation",
-  start: 2,
+  start: "2022-03-01",
+  stop: "2022-05-01",
   duration: 1,
   owner: "susan",
   dependency: "example",
 });
 createTask({
   name: "Support product team integration",
-  start: 2.5,
+  start: "2022-03-15",
+  stop: "2022-05-15",
   duration: 2,
   owner: "bvaughn",
   dependency: "example",
@@ -65,14 +67,15 @@ createTask({
 });
 createTask({
   name: "Finish project carryover",
-  start: 0,
+  start: "2022-01-01",
+  stop: "2022-03-01",
   duration: 2,
   owner: "susan",
 });
 createTask({
   name: "GitHub issue support",
-  start: 2,
-  duration: 1,
+  start: "2022-03-01",
+  stop: "2022-04-01",
   isOngoing: true,
   owner: "team",
 });
