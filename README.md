@@ -26,6 +26,6 @@ If you like this project ☕️ buy me a cup of coffee at [patreon.com/bvaughn](
 
 <img width="1004" alt="Planner screenshot" src="https://user-images.githubusercontent.com/29597/148121011-90ed264b-e8be-4455-a6aa-9041dec8db58.png">
 
-### [View days example](http://localhost:3000/?(tasks~!(start~*2022-02-12~stop~*2022-02-13~name~Spring_cleaning~owner~timeoff)(start~*2022-02-14~stop~*2022-02-17~name~Work~owner~pro)~team~(pro~(name~Professional_Brian)timeoff~(name~Time_off_Brian)))~)
+### [View days example](http://plannerjs.dev/?(tasks~!(start~*2022-02-12~stop~*2022-02-13~name~Spring_cleaning~owner~timeoff)(start~*2022-02-14~stop~*2022-02-17~name~Work~owner~pro)~team~(pro~(name~Professional_Brian)timeoff~(name~Time_off_Brian)))~)
 
 <img width="1004" alt="Planner screenshot" src="https://user-images.githubusercontent.com/29597/148121012-8529e903-1476-46b6-80ab-3996d3b88288.png">
