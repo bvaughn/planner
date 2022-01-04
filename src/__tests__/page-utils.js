@@ -1,3 +1,16 @@
+const { getUrlForData } = require("./url-utils");
+
+async function getEditorText(page, editorName) {
+  const text = await page.evaluate(async (testName) => {
+    const { createTestNameSelector, findAllNodes } = window.REACT_DOM;
+    const container = document.getElementById("root");
+    const pre = findAllNodes(container, [createTestNameSelector(testName)])[0];
+    return pre.innerText;
+  }, `CodeEditor-pre-${editorName}`);
+
+  return text;
+}
+
 async function getTestNameInnerText(page, testName) {
   return page.evaluate((targetTestName) => {
     const { createTestNameSelector, findAllNodes } = window.REACT_DOM;
@@ -7,6 +20,16 @@ async function getTestNameInnerText(page, testName) {
     ]);
     return results.length === 1 ? results[0].innerText : null;
   }, testName);
+}
+
+async function loadData(page, data) {
+  const url = getUrlForData(data);
+
+  await page.goto(url, {
+    waitUntil: "domcontentloaded",
+  });
+
+  await page.waitForSelector("canvas");
 }
 
 async function setEditorText(page, editorName, text) {
@@ -48,7 +71,9 @@ async function waitForTestName(page, testName) {
 }
 
 module.exports = {
+  getEditorText,
   getTestNameInnerText,
+  loadData,
   setEditorText,
   waitForTestName,
 };

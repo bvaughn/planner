@@ -36,7 +36,6 @@ export function getContrastRatio(colorA, colorB) {
   );
 }
 
-let colorIndex = 0;
 const colors = [
   "#2D2327",
   "#392D39",

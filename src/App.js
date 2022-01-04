@@ -4,6 +4,7 @@ import Planner from "./Planner";
 import CodeEditor from "./CodeEditor";
 import Header from "./Header";
 import { parseCode, stringifyObject } from "./utils/parsing";
+import { fromString, subtract } from "./utils/time";
 import { team as initialOwners, tasks as initialTasks } from "./data";
 import useURLData from "./hooks/useURLData";
 import styles from "./App.module.css";
@@ -14,6 +15,8 @@ export default function App() {
   const [data, setData] = useURLData(defaultData);
 
   const { team, tasks } = data;
+
+  migrateLegacyTasks(tasks);
 
   const teamString = useMemo(() => stringifyObject(data.team), [data.team]);
   const tasksString = useMemo(() => stringifyObject(data.tasks), [data.tasks]);
@@ -84,4 +87,45 @@ export default function App() {
       </div>
     </div>
   );
+}
+
+function migrateLegacyTasks(tasks) {
+  // Check for previous data format and update in place.
+  for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
+    const task = tasks[taskIndex];
+    if (task.hasOwnProperty("duration")) {
+      const startString = monthIndexToDateString(task.start);
+      const stopString = monthIndexToDateString(task.start + task.duration);
+
+      delete task.duration;
+
+      task.start = startString;
+      task.stop = subtract(fromString(stopString), 1).toString().substr(0, 10);
+    }
+  }
+}
+
+function monthIndexToDateString(index) {
+  let day;
+  switch (index % 1) {
+    case 0.25:
+      day = "07";
+      break;
+    case 0.5:
+      day = "15";
+      break;
+    case 0.75:
+      day = "21";
+      break;
+    default:
+      day = "01";
+      break;
+  }
+
+  let month = Math.floor(index) + 1;
+  if (month < 10) {
+    month = `0${month}`;
+  }
+
+  return `2022-${month}-${day}`;
 }

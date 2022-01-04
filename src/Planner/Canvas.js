@@ -1,11 +1,12 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import Tooltip from "./Tooltip";
 import {
-  drawTextToFitWidth,
-  drawTextToCenterWithin,
-  drawRoundedRect,
   drawAvatarCircle,
+  drawRoundedRect,
+  drawTextToCenterWithin,
+  drawTextToFitWidth,
 } from "../utils/canvas";
+import { getIntervalLabel } from "../utils/time";
 import { getColorForString, getContrastRatio } from "../utils/color";
 import { getOwnerName } from "../utils/task";
 
@@ -21,7 +22,6 @@ import {
   LINE_SEGMENT_MIN_LENGTH,
   LINE_WIDTH,
   MARGIN,
-  MONTHS,
   SLATE_GRAY,
   TASK_BAR_HEIGHT,
   TASK_ROW_HEIGHT,
@@ -65,10 +65,10 @@ export default function Canvas({
 
     // Draw background grid first.
     // This marks off months and weeks.
-    drawUnitGrid(context, width, height);
+    drawUnitGrid(context, metadata, width, height);
 
     // Render header text for month columns.
-    drawUnitHeaders(context, width);
+    drawUnitHeaders(context, metadata, width);
 
     for (let taskIndex = 0; taskIndex < metadata.tasks.length; taskIndex++) {
       drawTaskRow(context, taskIndex, metadata, width);
@@ -135,18 +135,43 @@ export default function Canvas({
 // Canvas drawing helper functions.
 /////////////////////////////////////////////
 
-function getUnitWidth(chartWidth) {
-  return Math.floor(chartWidth / MONTHS.length);
+function getIntervalWidth(chartWidth, metadata) {
+  let intervalWidth = 0;
+  if (metadata.intervalRange.length === 1) {
+    intervalWidth = chartWidth;
+  } else if (metadata.intervalRange.length > 1) {
+    const x0 = getDateLocation(metadata.intervalRange[0], metadata, chartWidth);
+    const x1 = getDateLocation(metadata.intervalRange[1], metadata, chartWidth);
+    intervalWidth = x1 - x0;
+  }
+  if (intervalWidth <= 0) {
+    throw Error(`Invalid interval width ${intervalWidth}`);
+  }
+  return intervalWidth;
 }
 
-function getTaskRect(task, rowIndex, chartWidth) {
-  const unitWidth = getUnitWidth(chartWidth);
+function getDateLocation(date, metadata, chartWidth) {
+  const dateRangeDelta =
+    metadata.stopDate.epochMilliseconds - metadata.startDate.epochMilliseconds;
+  const offset = Math.max(
+    0,
+    Math.min(
+      1,
+      (date.epochMilliseconds - metadata.startDate.epochMilliseconds) /
+        dateRangeDelta
+    )
+  );
 
-  const x = task.start * unitWidth;
+  return chartWidth * offset;
+}
+
+function getTaskRect(task, metadata, chartWidth) {
+  const rowIndex = metadata.taskToRowIndexMap.get(task);
+  const { start, stop } = metadata.taskToTemporalMap.get(task);
+
+  const x = getDateLocation(start, metadata, chartWidth);
   const y = HEADER_HEIGHT + MARGIN + rowIndex * TASK_ROW_HEIGHT;
-  const width = task.isOngoing
-    ? chartWidth - x - MARGIN
-    : task.duration * unitWidth - MARGIN;
+  const width = getDateLocation(stop, metadata, chartWidth) - x;
   const height = TASK_ROW_HEIGHT;
 
   return new DOMRect(x, y, width, height);
@@ -232,7 +257,7 @@ function drawTaskText(context, task, taskRect, metadata) {
   }
 }
 
-function drawTaskBar(context, task, taskRect, color, chartWidth) {
+function drawTaskBar(context, metadata, task, taskRect, color, chartWidth) {
   const barRect = getBarRect(taskRect);
 
   if (task.isOngoing) {
@@ -240,29 +265,23 @@ function drawTaskBar(context, task, taskRect, color, chartWidth) {
       context,
       barRect.x,
       barRect.y,
-      barRect.width,
+      chartWidth - barRect.x,
       barRect.height,
       CORNER_RADIUS
     );
     context.fillStyle = BLACK_TRANSPARENT;
     context.fill();
 
-    const unitWidth = getUnitWidth(chartWidth);
-    const chunkWidth =
-      (task.duration * unitWidth) / (MONTHS.length - task.start);
+    const intervalWidth = getIntervalWidth(chartWidth, metadata);
+    const chunkCount = Math.round((chartWidth - barRect.x) / intervalWidth);
+    const chunkWidth = barRect.width / chunkCount;
 
-    for (
-      let chunkIndex = task.start;
-      chunkIndex < MONTHS.length;
-      chunkIndex++
-    ) {
-      const chunkX = chunkIndex * unitWidth;
-
+    for (let chunkX = barRect.x; chunkX < chartWidth; chunkX += intervalWidth) {
       drawRoundedRect(
         context,
         chunkX,
         barRect.y,
-        Math.min(chunkWidth, taskRect.x + taskRect.width - chunkX),
+        Math.min(chunkWidth, chartWidth - chunkX),
         barRect.height,
         CORNER_RADIUS
       );
@@ -274,7 +293,7 @@ function drawTaskBar(context, task, taskRect, color, chartWidth) {
       context,
       barRect.x,
       barRect.y,
-      barRect.width,
+      barRect.width - MARGIN,
       barRect.height,
       CORNER_RADIUS
     );
@@ -285,8 +304,7 @@ function drawTaskBar(context, task, taskRect, color, chartWidth) {
 
 function drawTaskRow(context, taskIndex, metadata, chartWidth) {
   const task = metadata.tasks[taskIndex];
-  const rowIndex = metadata.taskToRowIndexMap.get(task);
-  const taskRect = getTaskRect(task, rowIndex, chartWidth);
+  const taskRect = getTaskRect(task, metadata, chartWidth);
 
   const ownerName = getOwnerName(task, metadata.team);
   const color = getColorForString(ownerName);
@@ -295,41 +313,37 @@ function drawTaskRow(context, taskIndex, metadata, chartWidth) {
 
   drawOwnerAvatar(context, taskRect, ownerName, color, avatar);
   drawTaskText(context, task, taskRect, metadata);
-  drawTaskBar(context, task, taskRect, color, chartWidth);
+  drawTaskBar(context, metadata, task, taskRect, color, chartWidth);
 }
 
-function drawUnitGrid(context, chartWidth, chartHeight) {
-  const unitWidth = getUnitWidth(chartWidth);
+function drawUnitGrid(context, metadata, chartWidth, chartHeight) {
+  for (let index = 0; index < metadata.intervalRange.length - 1; index++) {
+    const date = metadata.intervalRange[index];
 
-  // Draw background grid first.
-  // This marks off months and weeks.
-  for (let index = 0; index < 6; index++) {
-    // For simplification purposes, we pretend a month has 4 weeks.
-    for (let weekIndex = 0; weekIndex < 4; weekIndex++) {
-      const x = index * unitWidth + weekIndex * 0.25 * unitWidth;
-      const y = HEADER_HEIGHT + MARGIN;
+    const x = getDateLocation(date, metadata, chartWidth);
+    const y = HEADER_HEIGHT + MARGIN;
 
-      context.beginPath();
-      context.strokeStyle = LIGHT_GRAY;
-      context.lineWidth = LINE_WIDTH;
-      context.moveTo(x, y);
-      context.lineTo(x, chartHeight);
-      context.stroke();
-    }
+    context.beginPath();
+    context.strokeStyle = LIGHT_GRAY;
+    context.lineWidth = LINE_WIDTH;
+    context.moveTo(x, y);
+    context.lineTo(x, chartHeight);
+    context.stroke();
   }
 }
 
-function drawUnitHeaders(context, chartWidth) {
-  const unitWidth = getUnitWidth(chartWidth);
+function drawUnitHeaders(context, metadata, chartWidth) {
+  const intervalWidth = getIntervalWidth(chartWidth, metadata);
 
-  // Render header text for month columns.
-  for (let index = 0; index < 6; index++) {
-    const text = MONTHS[index];
+  for (let index = 0; index < metadata.intervalRange.length - 1; index++) {
+    const date = metadata.intervalRange[index];
 
-    const x = index * unitWidth;
+    const x = getDateLocation(date, metadata, chartWidth);
     const y = MARGIN;
-    const width = unitWidth;
+    const width = intervalWidth;
     const height = HEADER_HEIGHT;
+
+    const text = getIntervalLabel(date, metadata.unit);
 
     context.font = "bold 13px sans-serif";
     context.fillStyle = DARK_GRAY;
@@ -370,26 +384,12 @@ function drawDependencyConnections(
     return;
   }
 
-  const firstBarRect = getBarRect(
-    getTaskRect(
-      firstTask,
-      metadata.taskToRowIndexMap.get(firstTask),
-      chartWidth
-    )
-  );
+  const firstBarRect = getBarRect(getTaskRect(firstTask, metadata, chartWidth));
   const lowestBarRect = getBarRect(
-    getTaskRect(
-      lowestTask,
-      metadata.taskToRowIndexMap.get(lowestTask),
-      chartWidth
-    )
+    getTaskRect(lowestTask, metadata, chartWidth)
   );
   const parentBarRect = getBarRect(
-    getTaskRect(
-      parentTask,
-      metadata.taskToRowIndexMap.get(parentTask),
-      chartWidth
-    )
+    getTaskRect(parentTask, metadata, chartWidth)
   );
 
   const x = Math.max(
@@ -418,11 +418,7 @@ function drawDependencyConnections(
   for (let i = 0; i < dependentTasks.length; i++) {
     const dependantTask = dependentTasks[i];
     const dependantBarRect = getBarRect(
-      getTaskRect(
-        dependantTask,
-        metadata.taskToRowIndexMap.get(dependantTask),
-        chartWidth
-      )
+      getTaskRect(dependantTask, metadata, chartWidth)
     );
 
     const x0 = x;

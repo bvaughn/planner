@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@js-temporal/polyfill": "^0.3.0",
     "@playwright/test": "^1.17.1",
     "@testing-library/jest-dom": "^5.16.1",
     "@testing-library/react": "^12.1.2",
@@ -12,7 +13,6 @@
     "prism-react-renderer": "^1.2.1",
     "react": "^0.0.0-experimental-3dc41d8a2-20211223",
     "react-dom": "^0.0.0-experimental-3dc41d8a2-20211223",
-    "react-error-boundary": "^3.1.4",
     "react-scripts": "5.0.0",
     "react-virtualized-auto-sizer": "^1.0.6",
     "scheduler": "^0.0.0-experimental-3dc41d8a2-20211223",

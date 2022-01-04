@@ -4,7 +4,7 @@ import Preloader from "./Preloader";
 
 export default function Planner({ resetError, tasks, team, width }) {
   return (
-    <ErrorBoundary resetError={resetError}>
+    <ErrorBoundary resetError={resetError} width={width}>
       <Preloader tasks={tasks} team={team}>
         {({ metadata, ownerToImageMap }) => (
           <Canvas

@@ -1,53 +1,88 @@
 import { useLayoutEffect, useMemo, useState } from "react";
+import { getIntervalRange, getIntervalUnit, fromString } from "../utils/time";
 
+// TODO Make sure the Preloader isn't over-rendering.
 export default function Preloader({ children, tasks, team }) {
   const [ownerToImageMap, setOwnerToImageMap] = useState(() => new Map());
 
   // Precompute task and team metadata only when these values change.
   const metadata = useMemo(() => {
+    const taskToTemporalMap = new Map();
     const taskToRowIndexMap = new Map();
     const rows = [];
 
     const dependenciesMap = new Map();
     const idToTaskMap = new Map();
 
+    let minDate = null;
+    let maxDate = null;
+
     // Pre-sort dependencies to always follow parent tasks,
     // and oder them by (start) month index (lowest to highest).
     for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
       const task = tasks[taskIndex];
-      if (task.dependency != null) {
-        let currentIndex = taskIndex - 1;
-        while (currentIndex >= 0) {
-          const currentTask = tasks[currentIndex];
-          let move = false;
-          if (currentTask.id === task.dependency) {
+
+      const taskStart = fromString(task.start);
+      const taskStop = fromString(task.stop, "23:59:59");
+      taskToTemporalMap.set(task, { start: taskStart, stop: taskStop });
+
+      let currentIndex = taskIndex - 1;
+      while (currentIndex >= 0) {
+        const currentTask = tasks[currentIndex];
+        const { start: currentTaskStart, stop: currentTaskStop } =
+          taskToTemporalMap.get(currentTask);
+
+        let move = false;
+        if (currentTask.id === task.dependency) {
+          move = true;
+        } else if (currentTask.dependency === task.dependency) {
+          if (
+            taskStart.epochMilliseconds > currentTaskStart.epochMilliseconds
+          ) {
             move = true;
-          } else if (currentTask.dependency === task.dependency) {
-            if (task.start > currentTask.start) {
+          } else if (
+            taskStart.epochMilliseconds === currentTaskStart.epochMilliseconds
+          ) {
+            if (
+              taskStop.epochMilliseconds < currentTaskStop.epochMilliseconds
+            ) {
               move = true;
-            } else if (task.start === currentTask.start) {
-              if (task.duration < currentTask.duration) {
-                move = true;
-              } else if (!task.isOngoing && currentTask.isOngoing) {
-                move = true;
-              }
+            } else if (!task.isOngoing && currentTask.isOngoing) {
+              move = true;
             }
           }
+        }
 
-          if (move) {
-            tasks.splice(taskIndex, 1);
-            tasks.splice(currentIndex + 1, 0, task);
-            break;
-          } else {
-            currentIndex--;
-          }
+        if (move) {
+          tasks.splice(taskIndex, 1);
+          tasks.splice(currentIndex + 1, 0, task);
+          break;
+        } else {
+          currentIndex--;
         }
       }
     }
 
-    tasks.forEach((task) => {
+    for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
+      const task = tasks[taskIndex];
+
+      const { start: taskStart, stop: taskStop } = taskToTemporalMap.get(task);
+
+      if (
+        minDate === null ||
+        minDate.epochMilliseconds > taskStart.epochMilliseconds
+      ) {
+        minDate = taskStart;
+      }
+      if (
+        maxDate === null ||
+        maxDate.epochMilliseconds < taskStop.epochMilliseconds
+      ) {
+        maxDate = taskStop;
+      }
+
       let nextAvailableRowIndex = -1;
-      if (task.dependency == null) {
+      if (task.dependency == null && !task.isOngoing) {
         nextAvailableRowIndex = rows.findIndex((rowTasks, rowIndex) => {
           let match = true;
           for (
@@ -64,10 +99,13 @@ export default function Preloader({ children, tasks, team }) {
               match = false;
               break;
             }
+
+            const { start: rowTaskStart, stop: rowTaskStop } =
+              taskToTemporalMap.get(rowTask);
             if (
               !(
-                task.start + task.duration <= rowTask.start ||
-                task.start >= rowTask.start + rowTask.duration
+                taskStop.epochMilliseconds <= rowTaskStart.epochMilliseconds ||
+                taskStart.epochMilliseconds >= rowTaskStop.epochMilliseconds
               )
             ) {
               match = false;
@@ -105,16 +143,24 @@ export default function Preloader({ children, tasks, team }) {
           dependenciesMap.get(dependency).push(idToTaskMap.get(task.id));
         }
       }
-    });
+    }
+
+    const unit = getIntervalUnit(minDate, maxDate);
+    const intervalRange = getIntervalRange(minDate, maxDate);
 
     return {
       dependenciesMap,
+      intervalRange,
       maxRowIndex: rows.length,
       ownerToImageMap,
+      startDate: intervalRange[0],
+      stopDate: intervalRange[intervalRange.length - 1],
       taskToRowIndexMap,
+      taskToTemporalMap,
       tasks,
       team,
       textDOMRects: new Map(),
+      unit,
     };
   }, [ownerToImageMap, tasks, team]);
 

@@ -1,0 +1,41 @@
+[
+  {
+    id: "example",
+    name: "Design API",
+    owner: "bvaughn",
+    start: "2022-01-01",
+    stop: "2022-03-14"
+  },
+  {
+    id: 0,
+    name: "Write API documentation",
+    owner: "susan",
+    start: "2022-03-01",
+    dependency: "example",
+    stop: "2022-03-31"
+  },
+  {
+    id: 1,
+    name: "Support product team integration",
+    owner: "bvaughn",
+    start: "2022-03-15",
+    isOngoing: true,
+    dependency: "example",
+    stop: "2022-05-14"
+  },
+  {
+    id: 2,
+    name: "Finish project carryover",
+    owner: "susan",
+    start: "2022-01-01",
+    stop: "2022-02-28"
+  },
+  {
+    id: 3,
+    name: "GitHub issue support",
+    owner: "team",
+    start: "2022-03-01",
+    isOngoing: true,
+    stop: "2022-03-31"
+  }
+]
