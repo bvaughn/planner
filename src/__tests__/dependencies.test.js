@@ -1,5 +1,4 @@
 const { test, expect } = require("@playwright/test");
-const config = require("../../playwright.config");
 const {
   getTestNameInnerText,
   loadData,
@@ -61,24 +60,12 @@ const tasks = [
 
 const team = {};
 
-test.use(config);
 test.describe("Dependencies", () => {
-  let page;
-
-  test.beforeEach(async ({ browser }) => {
-    const context = await browser.newContext({
-      viewport: {
-        width: 1024,
-        height: 800,
-      },
-    });
-
-    page = await context.newPage();
-
+  test.beforeEach(async ({ page }) => {
     await loadData(page, { tasks, team });
   });
 
-  test("should be sorted and aligned correctly", async () => {
+  test("should be sorted and aligned correctly", async ({ page }) => {
     expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
       "canvas-screenshot-1.png"
     );

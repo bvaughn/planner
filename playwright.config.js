@@ -7,13 +7,13 @@ const config = {
     },
   },
 
+  reporter: 'html',
   use: {
-    headless: true,
     browserName: 'chromium',
-    launchOptions: {
-      // This bit of delay gives async React time to render
-      slowMo: 100,
-    },
+    viewport: {
+      width: 1024,
+      height: 800,
+    }
   },
 };
 
