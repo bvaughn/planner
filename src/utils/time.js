@@ -54,9 +54,6 @@ export function getIntervalLabel(date, unit) {
 }
 
 export function getIntervalRange(startDate, stopDate) {
-  if (!startDate || !stopDate) {
-    debugger;
-  }
   const startTime = startDate.epochMilliseconds;
   const stopTime = stopDate.epochMilliseconds;
   const unit = getIntervalUnit(startDate, stopDate);
@@ -117,9 +114,6 @@ export function getIntervalSize(startDate, stopDate) {
 }
 
 export function getIntervalUnit(start, stop) {
-  if (!start || !stop) {
-    debugger;
-  }
   const delta = stop.epochMilliseconds - start.epochMilliseconds;
   if (delta < MILLISECONDS_IN_DAY) {
     return INTERVAL_UNIT_DAY;

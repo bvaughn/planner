@@ -23,7 +23,6 @@ const tasks = [
 const team = {};
 
 test.describe("Teams", () => {
-
   test.beforeEach(async ({ page }) => {
     await loadData(page, { tasks, team });
   });
@@ -51,7 +50,7 @@ test.describe("Teams", () => {
             name: "Unclaimed",
           },
         })
-      )
+      ),
     ]);
 
     // Verify that the Legend has been updated and the Canvas has redrawn.
@@ -77,7 +76,7 @@ test.describe("Teams", () => {
             name: "Unclaimed",
           },
         })
-      )
+      ),
     ]);
 
     // Verify that the Canvas has redrawn with the new avatar.

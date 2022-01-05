@@ -5,164 +5,163 @@ import { getIntervalRange, getIntervalUnit, fromString } from "../utils/time";
 export default function Preloader({ children, tasks, team }) {
   const [ownerToImageMap, setOwnerToImageMap] = useState(() => new Map());
 
-  // Precompute task and team metadata only when these values change.
+  // Precompute task metadata only when these values change.
   const metadata = useMemo(() => {
-    const taskToTemporalMap = new Map();
-    const taskToRowIndexMap = new Map();
-    const rows = [];
+    // Pre-sort tasks based on the start date to simplify the subsequent sort.
+    const sortedTasks = tasks.sort((a, b) => {
+      if (a.start === b.start) {
+        if (a.stop === b.stop) {
+          return 0;
+        } else if (a.stop < b.stop) {
+          return 1;
+        } else {
+          return -1;
+        }
+      } else if (a.start < b.start) {
+        return -1;
+      } else {
+        return 1;
+      }
+    });
 
     const dependenciesMap = new Map();
     const idToTaskMap = new Map();
+    const rowsOfTasks = [];
+    const taskToRowIndexMap = new Map();
+    const taskToTemporalMap = new Map();
 
-    let minDate = null;
-    let maxDate = null;
-
-    // Pre-sort dependencies to always follow parent tasks,
-    // and oder them by (start) month index (lowest to highest).
-    for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
-      const task = tasks[taskIndex];
+    // Stick more than one task on a row if there's room–
+    // but leave room before tasks with dependencies so the arrow doesn't overlap.
+    for (let taskIndex = 0; taskIndex < sortedTasks.length; taskIndex++) {
+      const task = sortedTasks[taskIndex];
 
       const taskStart = fromString(task.start);
       const taskStop = fromString(task.stop, "23:59:59");
       taskToTemporalMap.set(task, { start: taskStart, stop: taskStop });
 
-      let currentIndex = taskIndex - 1;
-      while (currentIndex >= 0) {
-        const currentTask = tasks[currentIndex];
-        const { start: currentTaskStart, stop: currentTaskStop } =
-          taskToTemporalMap.get(currentTask);
+      let placed = false;
 
-        let move = false;
-        if (currentTask.id === task.dependency) {
-          move = true;
-        } else if (currentTask.dependency === task.dependency) {
-          if (
-            taskStart.epochMilliseconds > currentTaskStart.epochMilliseconds
-          ) {
-            move = true;
-          } else if (
-            taskStart.epochMilliseconds === currentTaskStart.epochMilliseconds
-          ) {
-            if (
-              taskStop.epochMilliseconds < currentTaskStop.epochMilliseconds
-            ) {
-              move = true;
-            } else if (!task.isOngoing && currentTask.isOngoing) {
-              move = true;
-            }
-          }
-        }
-
-        if (move) {
-          tasks.splice(taskIndex, 1);
-          tasks.splice(currentIndex + 1, 0, task);
-          break;
-        } else {
-          currentIndex--;
-        }
-      }
-    }
-
-    for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
-      const task = tasks[taskIndex];
-
-      const { start: taskStart, stop: taskStop } = taskToTemporalMap.get(task);
-
-      if (
-        minDate === null ||
-        minDate.epochMilliseconds > taskStart.epochMilliseconds
-      ) {
-        minDate = taskStart;
-      }
-      if (
-        maxDate === null ||
-        maxDate.epochMilliseconds < taskStop.epochMilliseconds
-      ) {
-        maxDate = taskStop;
-      }
-
-      let nextAvailableRowIndex = -1;
-      if (task.dependency == null && !task.isOngoing) {
-        nextAvailableRowIndex = rows.findIndex((rowTasks, rowIndex) => {
-          let match = true;
-          for (
-            let rowTaskIndex = 0;
-            rowTaskIndex < rowTasks.length;
-            rowTaskIndex++
-          ) {
-            const rowTask = rowTasks[rowTaskIndex];
-            if (rowTask.isOngoing) {
-              match = false;
-              break;
-            }
-            if (rowTask.dependency != null) {
-              match = false;
-              break;
-            }
-
-            const { start: rowTaskStart, stop: rowTaskStop } =
-              taskToTemporalMap.get(rowTask);
-            if (
-              !(
-                taskStop.epochMilliseconds <= rowTaskStart.epochMilliseconds ||
-                taskStart.epochMilliseconds >= rowTaskStop.epochMilliseconds
-              )
-            ) {
-              match = false;
-              break;
-            }
-          }
-          return match;
-        });
-      }
-
-      const rowIndex =
-        nextAvailableRowIndex >= 0 ? nextAvailableRowIndex : rows.length;
-      if (rows[rowIndex] == null) {
-        rows[rowIndex] = [task];
-      } else {
-        rows[rowIndex].push(task);
-      }
-
-      taskToRowIndexMap.set(task, rowIndex);
-
-      // Collect dependencies for later.
-      idToTaskMap.set(task.id, task);
       if (task.dependency != null) {
-        const dependencyId = task.dependency;
-        const dependency = idToTaskMap.get(dependencyId);
+        // If the task has a dependency, it belongs on the row beneath its parent
+        // (or beneath another tasks dependent on the same task, if one comes first).
+        // It's okay if other things are on that row but they have to be after it (so they don't overlap with the arrow).
+        // Since we've pre-sorted, anything on the row already is before it, so it needs to shift down.
+        for (let index = 0; index < rowsOfTasks.length; index++) {
+          const rowOfTasks = rowsOfTasks[index];
+          const match = rowOfTasks.find(({ id }) => id === task.dependency);
+          if (match) {
+            let matchIndex = index;
 
-        if (dependency == null) {
-          console.warn(
-            `Invalid dependenc; no parent task found with id ${dependencyId}`
-          );
-        } else {
-          if (!dependenciesMap.has(dependency)) {
-            dependenciesMap.set(dependency, []);
+            // We've found the parent task; now find where in the stack of dependencies this task belongs.
+            for (
+              let peekIndex = index + 1;
+              peekIndex < rowsOfTasks.length;
+              peekIndex++
+            ) {
+              const firstTaskOnRow = rowsOfTasks[peekIndex][0];
+              const firstTaskOnRowStart =
+                taskToTemporalMap.get(firstTaskOnRow).start;
+
+              if (
+                firstTaskOnRow.dependency === task.dependency &&
+                firstTaskOnRowStart.epochMilliseconds <
+                  taskStop.epochMilliseconds
+              ) {
+                // maybe keep looking
+                matchIndex = peekIndex;
+              } else {
+                break;
+              }
+            }
+
+            const matchingRowOfTasks = rowsOfTasks[matchIndex];
+            const firstTaskOnRow = matchingRowOfTasks[0];
+            const firstTaskOnRowStart =
+              taskToTemporalMap.get(firstTaskOnRow).start;
+
+            // If the dependent task can fit on the next row, put it there.
+            // Otherwise shift everything else down to make room.
+            if (
+              taskStop.epochMilliseconds < firstTaskOnRowStart.epochMilliseconds
+            ) {
+              matchingRowOfTasks.unshift(task);
+            } else {
+              rowsOfTasks.splice(matchIndex + 1, 0, [task]);
+            }
+
+            placed = true;
+            break;
           }
-          dependenciesMap.get(dependency).push(idToTaskMap.get(task.id));
         }
+      } else {
+        // If the task has no dependencies, put it on the highest/first row where there's sufficient room.
+        for (let index = 0; index < rowsOfTasks.length; index++) {
+          const rowOfTasks = rowsOfTasks[index];
+
+          // We only need to check the last task on the row, because we've pre-sorted the array.
+          const lastTaskOnRow = rowOfTasks[rowOfTasks.length - 1];
+          const lastTaskOnRowStop = taskToTemporalMap.get(lastTaskOnRow).stop;
+          if (
+            taskStart.epochMilliseconds >= lastTaskOnRowStop.epochMilliseconds
+          ) {
+            rowOfTasks.push(task);
+
+            placed = true;
+            break;
+          }
+        }
+      }
+
+      if (!placed) {
+        rowsOfTasks.push([task]);
       }
     }
 
+    // Populate the task-to-row Map now that the rows have been sorted.
+    // Also map id-to-task so we can more easily draw arrows between dependencies later.
+    rowsOfTasks.forEach((rowOfTasks, rowIndex) => {
+      rowOfTasks.forEach((task) => {
+        taskToRowIndexMap.set(task, rowIndex);
+
+        idToTaskMap.set(task.id, task);
+        if (task.dependency != null) {
+          const dependencyId = task.dependency;
+          const dependency = idToTaskMap.get(dependencyId);
+
+          if (dependency == null) {
+            console.warn(
+              `Invalid dependenc; no parent task found with id ${dependencyId}`
+            );
+          } else {
+            if (!dependenciesMap.has(dependency)) {
+              dependenciesMap.set(dependency, []);
+            }
+            dependenciesMap.get(dependency).push(idToTaskMap.get(task.id));
+          }
+        }
+      });
+    });
+
+    const minDate = taskToTemporalMap.get(sortedTasks[0]).start;
+    const maxDate = taskToTemporalMap.get(
+      sortedTasks[sortedTasks.length - 1]
+    ).stop;
     const unit = getIntervalUnit(minDate, maxDate);
     const intervalRange = getIntervalRange(minDate, maxDate);
 
     return {
       dependenciesMap,
       intervalRange,
-      maxRowIndex: rows.length,
-      ownerToImageMap,
+      maxRowIndex: rowsOfTasks.length,
       startDate: intervalRange[0],
       stopDate: intervalRange[intervalRange.length - 1],
       taskToRowIndexMap,
       taskToTemporalMap,
       tasks,
-      team,
       textDOMRects: new Map(),
       unit,
     };
-  }, [ownerToImageMap, tasks, team]);
+  }, [tasks]);
 
   // Pre-load images so we can draw avatars to the Canvas.
   useLayoutEffect(() => {

@@ -15,7 +15,6 @@ import {
   ARROW_SIZE,
   AVATAR_SIZE,
   BLACK,
-  BLACK_TRANSPARENT,
   CORNER_RADIUS,
   DARK_GRAY,
   HEADER_HEIGHT,
@@ -72,7 +71,7 @@ export default function Canvas({
     drawUnitHeaders(context, metadata, width);
 
     for (let taskIndex = 0; taskIndex < metadata.tasks.length; taskIndex++) {
-      drawTaskRow(context, taskIndex, metadata, width);
+      drawTaskRow(context, taskIndex, metadata, team, ownerToImageMap, width);
     }
 
     // Draw arrows between dependencies.
@@ -85,7 +84,7 @@ export default function Canvas({
         metadata
       );
     });
-  }, [height, metadata, width]);
+  }, [height, metadata, ownerToImageMap, team, width]);
 
   const handleMouseMove = (event) => {
     const { offsetX, offsetY } = event.nativeEvent;
@@ -280,14 +279,21 @@ function drawTaskBar(context, metadata, task, taskRect, color, chartWidth) {
   context.fill();
 }
 
-function drawTaskRow(context, taskIndex, metadata, chartWidth) {
+function drawTaskRow(
+  context,
+  taskIndex,
+  metadata,
+  team,
+  ownerToImageMap,
+  chartWidth
+) {
   const task = metadata.tasks[taskIndex];
   const taskRect = getTaskRect(task, metadata, chartWidth);
 
-  const ownerName = getOwnerName(task, metadata.team);
+  const ownerName = getOwnerName(task, team);
   const color = getColorForString(ownerName);
-  const owner = metadata.team[task.owner];
-  const avatar = metadata.ownerToImageMap.get(owner);
+  const owner = team[task.owner];
+  const avatar = ownerToImageMap.get(owner);
 
   drawOwnerAvatar(context, taskRect, ownerName, color, avatar);
   drawTaskText(context, task, taskRect, metadata);
