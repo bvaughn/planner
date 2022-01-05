@@ -14,6 +14,11 @@ export function hexToRgb(hex) {
     : null;
 }
 
+export function hexToRgba(hex, alpha) {
+  const [r, g, b] = hexToRgb(hex);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 export function getLuminance(color) {
   const rgb = Array.isArray(color) ? color : hexToRgb(color);
 

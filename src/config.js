@@ -1,5 +1,5 @@
 export const BLACK = "#000000";
-export const BLACK_TRANSPARENT = "rgba(0,0,0,.05)";
+export const BLACK_TRANSPARENT = "rgba(0,0,0,.25)";
 export const DARK_GRAY = "#333333";
 export const LIGHT_GRAY = "#eeeeee";
 export const SLATE_GRAY = "#c2d0df";

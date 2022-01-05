@@ -2,12 +2,13 @@ import { useLayoutEffect, useRef, useState } from "react";
 import Tooltip from "./Tooltip";
 import {
   drawAvatarCircle,
+  drawDiagonalStripePattern,
   drawRoundedRect,
   drawTextToCenterWithin,
   drawTextToFitWidth,
 } from "../utils/canvas";
 import { getIntervalLabel } from "../utils/time";
-import { getColorForString, getContrastRatio } from "../utils/color";
+import { getColorForString, getContrastRatio, hexToRgba } from "../utils/color";
 import { getOwnerName } from "../utils/task";
 
 import {
@@ -260,46 +261,23 @@ function drawTaskText(context, task, taskRect, metadata) {
 function drawTaskBar(context, metadata, task, taskRect, color, chartWidth) {
   const barRect = getBarRect(taskRect);
 
+  drawRoundedRect(
+    context,
+    barRect.x,
+    barRect.y,
+    barRect.width - MARGIN,
+    barRect.height,
+    CORNER_RADIUS
+  );
+
   if (task.isOngoing) {
-    drawRoundedRect(
-      context,
-      barRect.x,
-      barRect.y,
-      chartWidth - barRect.x,
-      barRect.height,
-      CORNER_RADIUS
-    );
-    context.fillStyle = BLACK_TRANSPARENT;
-    context.fill();
-
-    const intervalWidth = getIntervalWidth(chartWidth, metadata);
-    const chunkCount = Math.round((chartWidth - barRect.x) / intervalWidth);
-    const chunkWidth = barRect.width / chunkCount;
-
-    for (let chunkX = barRect.x; chunkX < chartWidth; chunkX += intervalWidth) {
-      drawRoundedRect(
-        context,
-        chunkX,
-        barRect.y,
-        Math.min(chunkWidth, chartWidth - chunkX),
-        barRect.height,
-        CORNER_RADIUS
-      );
-      context.fillStyle = color;
-      context.fill();
-    }
+    const pattern = drawDiagonalStripePattern("#fff", hexToRgba(color, 0.5));
+    context.fillStyle = context.createPattern(pattern, "repeat");
   } else {
-    drawRoundedRect(
-      context,
-      barRect.x,
-      barRect.y,
-      barRect.width - MARGIN,
-      barRect.height,
-      CORNER_RADIUS
-    );
     context.fillStyle = color;
-    context.fill();
   }
+
+  context.fill();
 }
 
 function drawTaskRow(context, taskIndex, metadata, chartWidth) {

@@ -30,6 +30,8 @@ function createTask({
     stop,
   };
 
+  // These fields are added conditionally so they don't show up in the editable text input.
+
   if (isOngoing) {
     task.isOngoing = true;
   }
