@@ -10,18 +10,24 @@ export default function Preloader({ children, tasks, team }) {
     // Pre-sort tasks based on the start date to simplify the subsequent sort.
     const sortedTasks = tasks.sort((a, b) => {
       if (a.start === b.start) {
-        if (a.stop === b.stop) {
-          return 0;
-        } else if (a.stop < b.stop) {
+        if (a.stop < b.stop) {
           return 1;
-        } else {
+        } else if (a.stop > b.stop) {
           return -1;
         }
       } else if (a.start < b.start) {
         return -1;
-      } else {
+      } else if (a.start > b.start) {
         return 1;
       }
+
+      if (a.owner < b.owner) {
+        return -1;
+      } else if (a.owner > b.owner) {
+        return 1;
+      }
+
+      return 0;
     });
 
     const dependenciesMap = new Map();
