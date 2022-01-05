@@ -1,5 +1,4 @@
 const { test, expect } = require("@playwright/test");
-const config = require("../../playwright.config");
 const {
   getTestNameInnerText,
   loadData,
@@ -23,24 +22,13 @@ const tasks = [
 
 const team = {};
 
-test.use(config);
 test.describe("Teams", () => {
-  let page;
 
-  test.beforeEach(async ({ browser }) => {
-    const context = await browser.newContext({
-      viewport: {
-        width: 1024,
-        height: 800,
-      },
-    });
-
-    page = await context.newPage();
-
+  test.beforeEach(async ({ page }) => {
     await loadData(page, { tasks, team });
   });
 
-  test("should be editable", async () => {
+  test("should be editable", async ({ page }) => {
     const innerTextBefore = await getTestNameInnerText(page, "Legend-list");
     expect(innerTextBefore).toMatchSnapshot("team-1.txt");
     expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
@@ -48,20 +36,23 @@ test.describe("Teams", () => {
     );
 
     // Change team configuration.
-    await setEditorText(
-      page,
-      "team",
-      JSON.stringify({
-        bvaughn: {
-          avatar: "https://avatars.githubusercontent.com/u/29597",
-          name: "Brian",
-        },
-        team: {
-          avatar: null,
-          name: "Unclaimed",
-        },
-      })
-    );
+    await Promise.all([
+      page.waitForResponse("https://avatars.githubusercontent.com/**"),
+      setEditorText(
+        page,
+        "team",
+        JSON.stringify({
+          bvaughn: {
+            avatar: "https://avatars.githubusercontent.com/u/29597",
+            name: "Brian",
+          },
+          team: {
+            avatar: null,
+            name: "Unclaimed",
+          },
+        })
+      )
+    ]);
 
     // Verify that the Legend has been updated and the Canvas has redrawn.
     const innerTextAfter = await getTestNameInnerText(page, "Legend-list");
@@ -71,20 +62,23 @@ test.describe("Teams", () => {
     );
 
     // Change user avatar.
-    await setEditorText(
-      page,
-      "team",
-      JSON.stringify({
-        bvaughn: {
-          avatar: "https://avatars.githubusercontent.com/u/29597",
-          name: "Brian",
-        },
-        team: {
-          avatar: "https://avatars.githubusercontent.com/u/6412038?s=200&v=4",
-          name: "Unclaimed",
-        },
-      })
-    );
+    await Promise.all([
+      page.waitForResponse("https://avatars.githubusercontent.com/**"),
+      setEditorText(
+        page,
+        "team",
+        JSON.stringify({
+          bvaughn: {
+            avatar: "https://avatars.githubusercontent.com/u/29597",
+            name: "Brian",
+          },
+          team: {
+            avatar: "https://avatars.githubusercontent.com/u/6412038?s=200&v=4",
+            name: "Unclaimed",
+          },
+        })
+      )
+    ]);
 
     // Verify that the Canvas has redrawn with the new avatar.
     expect(await page.locator("canvas").screenshot()).toMatchSnapshot(

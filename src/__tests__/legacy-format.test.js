@@ -1,5 +1,4 @@
 const { test, expect } = require("@playwright/test");
-const config = require("../../playwright.config");
 const {
   getEditorText,
   getTestNameInnerText,
@@ -7,22 +6,8 @@ const {
   setEditorText,
 } = require("./page-utils");
 
-test.use(config);
 test.describe("Legacy format", () => {
-  let page;
-
-  test.beforeEach(async ({ browser }) => {
-    const context = await browser.newContext({
-      viewport: {
-        width: 1024,
-        height: 800,
-      },
-    });
-
-    page = await context.newPage();
-  });
-
-  test("should auto migrate legacy data format", async () => {
+  test("should auto migrate legacy data format", async ({ page }) => {
     await loadData(page, {
       tasks: [
         {

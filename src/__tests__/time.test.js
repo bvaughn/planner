@@ -1,27 +1,12 @@
 const { test, expect } = require("@playwright/test");
-const config = require("../../playwright.config");
 const {
   getTestNameInnerText,
   loadData,
   setEditorText,
 } = require("./page-utils");
 
-test.use(config);
 test.describe("Time", () => {
-  let page;
-
-  test.beforeEach(async ({ browser }) => {
-    const context = await browser.newContext({
-      viewport: {
-        width: 1024,
-        height: 800,
-      },
-    });
-
-    page = await context.newPage();
-  });
-
-  test("should handle multi-day intervals", async () => {
+  test("should handle multi-day intervals", async ({ page }) => {
     await loadData(page, {
       tasks: [
         {
@@ -45,7 +30,7 @@ test.describe("Time", () => {
     );
   });
 
-  test("should handle multi-week intervals", async () => {
+  test("should handle multi-week intervals", async ({ page }) => {
     await loadData(page, {
       tasks: [
         {
@@ -72,7 +57,7 @@ test.describe("Time", () => {
     );
   });
 
-  test("should handle multi-month intervals", async () => {
+  test("should handle multi-month intervals", async ({ page }) => {
     await loadData(page, {
       tasks: [
         {
@@ -123,7 +108,7 @@ test.describe("Time", () => {
     );
   });
 
-  test("should handle multi-year intervals", async () => {
+  test("should handle multi-year intervals", async ({ page }) => {
     await loadData(page, {
       tasks: [
         {
