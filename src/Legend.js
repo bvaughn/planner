@@ -1,46 +1,53 @@
 import { useMemo } from "react";
-import { getOwnerName } from "./utils/task";
 import { getColorForString } from "./utils/color";
 import styles from "./Legend.module.css";
 
 export default function Legend({ team, tasks }) {
-  const [namesArray, nameToAvatarMap] = useMemo(() => {
+  const entries = useMemo(() => {
     const map = new Map();
-    const set = new Set();
 
     for (let key in team) {
       const owner = team[key];
-      const name = owner.name?.toLowerCase();
+      const ownerName = owner.name || key;
 
-      if (name) {
-        set.add(name);
-        if (owner.avatar) {
-          map.set(name, owner.avatar);
-        }
-      }
+      map.set(key.toLowerCase(), {
+        name: ownerName,
+        color: owner.color || getColorForString(ownerName),
+        avatar: owner.avatar || null,
+      });
     }
 
     for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
       const task = tasks[taskIndex];
-      const owner = team[task.owner];
-      if (owner == null) {
-        const ownerName = getOwnerName(task, team);
-        set.add(ownerName);
+      const ownerKey = task.owner || "Team";
+      if (!map.has(ownerKey)) {
+        map.set(ownerKey, {
+          name: ownerKey.toLowerCase(),
+          color: getColorForString(ownerKey),
+          avatar: null,
+        });
       }
     }
 
-    return [Array.from(set), map];
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.name < b.name) {
+        return -1;
+      } else if (a.name > b.name) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
   }, [team, tasks]);
 
   return (
     <ul className={styles.List} data-testname="Legend-list">
-      {namesArray.sort().map((name) => {
-        const avatar = nameToAvatarMap.get(name);
+      {entries.map(({ avatar, color, name }) => {
         return (
           <li key={name} className={styles.ListItem}>
             <span
               className={styles.ColorChip}
-              style={{ backgroundColor: getColorForString(name) }}
+              style={{ backgroundColor: color }}
             >
               {avatar && (
                 <img className={styles.AvatarImage} src={avatar} alt="Avatar" />

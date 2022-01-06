@@ -9,7 +9,14 @@ const config = {
 
   reporter: 'html',
   use: {
+    // Uncomment for easier local debugging
+    // headless: false,
+    // launchOptions: {
+    //   slowMo: 1000,
+    // },
+
     browserName: 'chromium',
+
     viewport: {
       width: 1024,
       height: 800,

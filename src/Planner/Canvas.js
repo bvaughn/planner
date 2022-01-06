@@ -291,8 +291,9 @@ function drawTaskRow(
   const taskRect = getTaskRect(task, metadata, chartWidth);
 
   const ownerName = getOwnerName(task, team);
-  const color = getColorForString(ownerName);
   const owner = team[task.owner];
+
+  const color = owner?.color || getColorForString(ownerName);
   const avatar = ownerToImageMap.get(owner);
 
   drawOwnerAvatar(context, taskRect, ownerName, color, avatar);

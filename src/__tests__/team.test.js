@@ -36,13 +36,13 @@ test.describe("Teams", () => {
 
     // Change team configuration.
     await Promise.all([
-      page.waitForResponse("https://avatars.githubusercontent.com/**"),
+      page.waitForResponse("**/avatar.png"),
       setEditorText(
         page,
         "team",
         JSON.stringify({
           bvaughn: {
-            avatar: "https://avatars.githubusercontent.com/u/29597",
+            avatar: "/avatar.png",
             name: "Brian",
           },
           team: {
@@ -62,17 +62,17 @@ test.describe("Teams", () => {
 
     // Change user avatar.
     await Promise.all([
-      page.waitForResponse("https://avatars.githubusercontent.com/**"),
+      page.waitForResponse("**/meta-image.png"),
       setEditorText(
         page,
         "team",
         JSON.stringify({
           bvaughn: {
-            avatar: "https://avatars.githubusercontent.com/u/29597",
+            avatar: "/avatar.png",
             name: "Brian",
           },
           team: {
-            avatar: "https://avatars.githubusercontent.com/u/6412038?s=200&v=4",
+            avatar: "/meta-image.png",
             name: "Unclaimed",
           },
         })
