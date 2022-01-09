@@ -26,6 +26,7 @@
   overflow: auto;
   margin-top: 0.5rem;
   position: relative;
+  min-height: 12rem
 }
 
 .CodeColumnLeft,
