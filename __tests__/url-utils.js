@@ -1,4 +1,4 @@
-const { stringify } = require("jsurl2");
+const btoa = require("btoa");
 
 const PUBLIC_URL = "http://localhost:3000";
 
@@ -11,7 +11,11 @@ function getUrlForData(data) {
 function getUrlForOgImage(data) {
   const stringified = stringify(data);
 
-  return `${PUBLIC_URL}/api/ogimage/?${stringified}`;
+  return `${PUBLIC_URL}/api/ogimage/?data=${stringified}`;
+}
+
+function stringify(data) {
+  return btoa(JSON.stringify(data));
 }
 
 module.exports = {

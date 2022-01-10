@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     "Cache-Control": "no-cache",
   });
 
-  const url = `${URL}/headless?${search.substr(1)}`;
+  const url = `${URL}/headless${search}`;
   console.log(`Requesting URL "${url}"`);
 
   const [_, response] = await Promise.all([
