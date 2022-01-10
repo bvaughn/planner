@@ -49,28 +49,22 @@ export default async function handler(req, res) {
     }),
   ]);
 
-  console.log(`Response status ${response.status()}`);
+  const status = response.status();
+  console.log(`Response status ${status}`);
 
-  switch (response.status()) {
-    case 200: {
-      const buffer = await page.locator("#ogImageContainer").screenshot();
+  // TODO Handle status 304 and implement caching:
+  // https://nextjs.org/docs/api-reference/next/image#caching-behavior
+  if (status >= 200 && status < 400) {
+    const buffer = await page.locator("#ogImageContainer").screenshot();
 
-      res.writeHead(200, { "Content-Type": "image/png" });
-      res.write(buffer, "binary");
-      res.end(null, "binary");
-      break;
-    }
-    case 304: {
-      // TODO Implement caching.
-      // https://nextjs.org/docs/api-reference/next/image#caching-behavior
-    }
-    default: {
-      const path = join(process.cwd(), "static", "og-image.png");
+    res.writeHead(200, { "Content-Type": "image/png" });
+    res.write(buffer, "binary");
+    res.end(null, "binary");
+  } else {
+    const path = join(process.cwd(), "static", "og-image.png");
 
-      // If the chart didn't generate correctly for any reason, serve a default fallback og:image.
-      res.writeHead(200, { "Content-Type": "image/png" });
-      createReadStream(path).pipe(res);
-      break;
-    }
+    // If the chart didn't generate correctly for any reason, serve a default fallback og:image.
+    res.writeHead(200, { "Content-Type": "image/png" });
+    createReadStream(path).pipe(res);
   }
 }
