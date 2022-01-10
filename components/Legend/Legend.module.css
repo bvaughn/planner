@@ -1,0 +1,50 @@
+.List {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: space-around;
+  padding: 0;
+  margin: 0;
+  white-space: nowrap;
+  overflow: auto;
+}
+
+.ListItem {
+  list-style-type: none;
+  flex: 1 1 auto;
+  margin: 0 1em 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background: #fff;
+  border: 1px solid #eee;
+  padding: 0.5em;
+  border-radius: 0.25em;
+  text-transform: capitalize;
+  overflow: auto;
+}
+.ListItem:last-of-type {
+  margin-right: 0;
+}
+
+.ColorChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.5em;
+  overflow: hidden;
+}
+
+.AvatarImage {
+  width: 100%;
+  height: 100%;
+}
+
+.ItemName {
+  overflow: auto;
+  text-overflow: ellipsis;
+}
+
+.Letter {
+  font-weight: bold;
+  font-size: 1.25em;
+}

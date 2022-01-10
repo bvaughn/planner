@@ -1,0 +1,51 @@
+.Header {
+  flex: 0 0 auto;
+  display: flex;
+  margin-bottom: 0.5em;
+}
+
+.LeftContainer,
+.RightContainer {
+  display: flex;
+  align-items: center;
+}
+.LeftContainer {
+  margin-right: 0.5em;
+}
+.RightContainer {
+  margin-left: 0.5em;
+}
+
+.Icon {
+  width: 20px;
+  height: 20px;
+  color: #363852;
+}
+
+.ButtonOrLink {
+  display: flex;
+  border: none;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 0.25em;
+  padding: 0.25em;
+  margin-right: 0.5em;
+}
+.ButtonOrLink:last-of-type {
+  margin-right: 0;
+}
+.ButtonOrLink:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+.ButtonOrLink:disabled {
+  background-color: transparent;
+  cursor: default;
+  opacity: 0.5;
+}
+
+@media only print {
+  .LeftContainer,
+  .RightContainer {
+    display: none;
+  }
+}
