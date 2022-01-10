@@ -31,6 +31,9 @@ export default async function handler(req, res) {
   // There's some overhead in creating a page as well,
   // but pages seem less safe to re-use.
   const page = await browserContext.newPage();
+  page.setExtraHTTPHeaders({
+    "Cache-Control": "no-cache",
+  });
 
   const url = `${URL}/headless?${search.substr(1)}`;
   console.log(`Requesting URL "${url}"`);
@@ -42,23 +45,28 @@ export default async function handler(req, res) {
     }),
   ]);
 
-  // TODO This fallback logic doesn't work because Next auto-wraps errors in 200 status pages.
-  // Figure out how to disable this behavior in the future.
-  // As it is, the server ends up waiting for a long time and eventually timing out.
+  console.error(`Response status ${response.status()}`);
 
-  if (response.status() === 200) {
-    const buffer = await page.locator("#ogImageContainer").screenshot();
+  switch (response.status()) {
+    case 200: {
+      const buffer = await page.locator("#ogImageContainer").screenshot();
 
-    res.writeHead(200, { "Content-Type": "image/png" });
-    res.write(buffer, "binary");
-    res.end(null, "binary");
-  } else {
-    console.error(`Server error status ${response.status()}`);
+      res.writeHead(200, { "Content-Type": "image/png" });
+      res.write(buffer, "binary");
+      res.end(null, "binary");
+      break;
+    }
+    case 304: {
+      // TODO Implement caching
+      // https://nextjs.org/docs/api-reference/next/image#caching-behavior
+    }
+    default: {
+      const path = join(process.cwd(), "static", "og-image.png");
 
-    const path = join(process.cwd(), "static", "og-image.png");
-
-    // If the chart didn't generate correctly for any reason, serve a default fallback og:image.
-    res.writeHead(200, { "Content-Type": "image/png" });
-    createReadStream(path).pipe(res);
+      // If the chart didn't generate correctly for any reason, serve a default fallback og:image.
+      res.writeHead(200, { "Content-Type": "image/png" });
+      createReadStream(path).pipe(res);
+      break;
+    }
   }
 }
