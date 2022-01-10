@@ -3,9 +3,12 @@
 "use strict";
 
 const { spawn } = require("child_process");
+const { readFileSync } = require("fs");
 const { join } = require("path");
 
 const ROOT_PATH = join(__dirname);
+
+const TIMEOUT_DURATION = 60_000;
 
 let buildProcess = null;
 let serverProcess = null;
@@ -40,6 +43,12 @@ function logError(loggable) {
 }
 
 function build() {
+  const timeoutID = setTimeout(() => {
+    logError("Build timed out");
+
+    exitWithCode(1);
+  }, TIMEOUT_DURATION);
+
   logBright("Building project");
 
   buildProcess = spawn("yarn", ["build"], { cwd: ROOT_PATH });
@@ -47,16 +56,21 @@ function build() {
     logDim(data);
   });
   buildProcess.stderr.on("data", (data) => {
-    if (`${data}`.startsWith("warn")) {
+    const stringified = `${data}`.trim();
+    if (stringified.startsWith("warn")) {
       logDim(data);
-    } else {
-      logError(`Error:\n${data}`);
+    } else if (stringified) {
+      logError(`Error:\n${stringified}`);
 
-      exitWithCode(1);
+      // Most of the things coming through on stderr are warnings.
+      // Log them but rely on the build timeout to infer a true fatal error.
+      // exitWithCode(1);
     }
   });
   buildProcess.on("close", (code) => {
     logBright("Project built");
+
+    clearTimeout(timeoutID);
 
     runServer();
   });
@@ -64,17 +78,32 @@ function build() {
 
 function runServer() {
   const timeoutID = setTimeout(() => {
-    // Assume the test server failed to start.
     logError("Server failed to start");
+
     exitWithCode(1);
-  }, 30000);
+  }, TIMEOUT_DURATION);
 
   logBright("Starting server");
 
-  serverProcess = spawn("yarn", ["start"], { cwd: ROOT_PATH });
+  let severStarted = false;
+
+  const localEnv = readFileSync("./.env.local", { encoding: "utf8" });
+
+  serverProcess = spawn("yarn", ["start"], {
+    cwd: ROOT_PATH,
+    env: { ...process.env, ...localEnv },
+  });
   serverProcess.stdout.on("data", (data) => {
-    if (`${data}`.includes("Ready on")) {
+    const stringified = `${data}`.trim();
+
+    if (!severStarted) {
+      logDim(stringified);
+    }
+
+    if (stringified.includes("started server")) {
       logBright("Testing server running");
+
+      severStarted = true;
 
       clearTimeout(timeoutID);
 
@@ -82,7 +111,8 @@ function runServer() {
     }
   });
   serverProcess.stderr.on("data", (data) => {
-    if (`${data}`.includes("EADDRINUSE")) {
+    const stringified = `${data}`.trim();
+    if (stringified.includes("EADDRINUSE")) {
       // Something is occuprying this port;
       // We could kill the process and restart but probably better to prompt the user to do this.
 
@@ -90,7 +120,7 @@ function runServer() {
       logBright("  kill -9 $(lsof -ti:8080)");
 
       exitWithCode(1);
-    } else if (`${data}`.includes("ERROR")) {
+    } else if (stringified.includes("ERROR")) {
       logError(`Error:\n${data}`);
 
       exitWithCode(1);
@@ -156,6 +186,7 @@ function exitWithCode(code) {
     }
   }
 
+  logBright(`Exiting with code ${code}`);
   process.exit(code);
 }
 

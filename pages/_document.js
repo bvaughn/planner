@@ -1,7 +1,10 @@
 import Document, { Html, Head, Main, NextScript } from "next/document";
 
 const NEXT_PUBLIC_VERCEL_URL = process.env.NEXT_PUBLIC_VERCEL_URL;
-const HOST = process.env.NODE_ENV === "development" ? "http:" : "https";
+const HOST =
+  process.env.ENV_HOST || process.env.NODE_ENV === "development"
+    ? "http"
+    : "https";
 const URL = `${HOST}://${NEXT_PUBLIC_VERCEL_URL}`;
 
 export default function CustomDocument() {

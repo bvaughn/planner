@@ -6,7 +6,10 @@ import { loadEnvConfig } from "@next/env";
 import { launchChromium } from "playwright-aws-lambda";
 
 const NEXT_PUBLIC_VERCEL_URL = process.env.NEXT_PUBLIC_VERCEL_URL;
-const HOST = process.env.NODE_ENV === "development" ? "http" : "https";
+const HOST =
+  process.env.ENV_HOST || process.env.NODE_ENV === "development"
+    ? "http"
+    : "https";
 const URL = `${HOST}://${NEXT_PUBLIC_VERCEL_URL}`;
 
 let browserContext = null;
@@ -32,6 +35,7 @@ export default async function handler(req, res) {
   // but pages seem less safe to re-use.
   const page = await browserContext.newPage();
   page.setExtraHTTPHeaders({
+    // TODO Remove this header once 304 status is supported.
     "Cache-Control": "no-cache",
   });
 
@@ -45,7 +49,7 @@ export default async function handler(req, res) {
     }),
   ]);
 
-  console.error(`Response status ${response.status()}`);
+  console.log(`Response status ${response.status()}`);
 
   switch (response.status()) {
     case 200: {
@@ -57,7 +61,7 @@ export default async function handler(req, res) {
       break;
     }
     case 304: {
-      // TODO Implement caching
+      // TODO Implement caching.
       // https://nextjs.org/docs/api-reference/next/image#caching-behavior
     }
     default: {
