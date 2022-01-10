@@ -1,0 +1,11 @@
+.Container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: auto;
+}
+
+.Canvas {
+  background-color: #fff;
+  border-radius: 0.25em;
+}

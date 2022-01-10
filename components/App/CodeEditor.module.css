@@ -1,0 +1,44 @@
+.Header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25em;
+}
+
+.HeaderText {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.HeaderHint {
+  color: #363852;
+  font-size: 11px;
+  margin-left: 0.25em;
+}
+
+.Pre,
+.TextArea {
+  max-height: 100%;
+  overflow: auto;
+  margin: 0;
+  padding: 0.5em;
+  border-radius: 0.25em;
+  flex: 1 1 auto;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.Pre {
+  white-space: pre-wrap;
+}
+
+.TextArea {
+  background-color: #292d3e;
+  color: #fff;
+  border: none;
+  appearance: none;
+  outline: none;
+  resize: none;
+}
+.TextArea:focus {
+  background-color: #181c2d;
+}

@@ -1,0 +1,12 @@
+.ErrorHeader {
+  color: #a00;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.ErrorMessage {
+  background-color: #fee;
+  color: #a00;
+  padding: 0.5em;
+  font-family: monospace;
+}

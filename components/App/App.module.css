@@ -1,0 +1,82 @@
+.App {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1em;
+  border: 1px solid #eee;
+  border-radius: 1em;
+}
+
+.ChartContainer,
+.CodeContainer {
+  background: #fff;
+  padding: 0.5em;
+  border-radius: 0.25em;
+  border: 1px solid #eee;
+}
+.ChartContainer {
+  flex: 0 0 auto;
+}
+.CodeContainer {
+  flex: 1 1 auto;
+  overflow: auto;
+  margin-top: 0.5em;
+  position: relative;
+}
+
+.CodeColumnLeft,
+.CodeColumnRight {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0.5em;
+  bottom: 0.5em;
+}
+.CodeColumnLeft {
+  left: 0.5em;
+  width: 65%;
+}
+.CodeColumnRight {
+  right: 0.5em;
+  width: calc(35% - 1.5em);
+}
+
+@media only screen and (max-width: 800px) {
+  .CodeColumnLeft,
+  .CodeColumnRight {
+    top: unset;
+    left: unset;
+    right: unset;
+    width: calc(100% - 1em);
+  }
+
+  .CodeColumnLeft {
+    top: 0.5em;
+    height: 65%;
+  }
+
+  .CodeColumnRight {
+    bottom: 0.5em;
+    height: calc(35% - 1.5em);
+  }
+}
+
+@media only screen and (orientation: landscape) and (max-height: 500px) {
+  .CodeContainer {
+    display: none;
+  }
+}
+
+@media only print {
+  .App {
+    background: transparent;
+  }
+
+  .CodeContainer {
+    display: none;
+  }
+}

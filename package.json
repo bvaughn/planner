@@ -1,52 +1,36 @@
 {
-  "name": "react-devtools-h1-2022",
-  "version": "0.1.0",
   "private": true,
+  "scripts": {
+    "build": "next build",
+    "debug": "NODE_OPTIONS='--inspect' next dev",
+    "dev": "next dev",
+    "dev:kill": "kill -9 $(lsof -ti:3000)",
+    "lint": "next lint",
+    "playwright:install": "npx playwright install chromium",
+    "prettier": "prettier --write \"{__tests__,components,pages}/**/*.{js,json,css}\" && prettier --write \"{run_e2e_tests,server}.js\"",
+    "start": "next start",
+    "test:e2e": "playwright test --config=playwright.config.js"
+  },
   "dependencies": {
     "@js-temporal/polyfill": "^0.3.0",
     "@playwright/test": "^1.17.1",
-    "@testing-library/jest-dom": "^5.16.1",
-    "@testing-library/react": "^12.1.2",
-    "@testing-library/user-event": "^13.5.0",
     "history": "^5.2.0",
     "jsurl2": "^2.1.0",
+    "playwright-aws-lambda": "^0.7.0",
+    "playwright-core": "^1.17.1",
     "prism-react-renderer": "^1.2.1",
-    "react": "^0.0.0-experimental-3dc41d8a2-20211223",
-    "react-dom": "^0.0.0-experimental-3dc41d8a2-20211223",
-    "react-scripts": "5.0.0",
+    "react": "^0.0.0-experimental-42c30e8b1-20220104",
+    "react-dom": "^0.0.0-experimental-42c30e8b1-20220104",
     "react-virtualized-auto-sizer": "^1.0.6",
-    "scheduler": "^0.0.0-experimental-3dc41d8a2-20211223",
-    "web-vitals": "^2.1.2"
+    "scheduler": "^0.0.0-experimental-42c30e8b1-20220104",
+    "sharp": "^0.29.3",
+    "swr": "^1.0.1"
   },
   "devDependencies": {
+    "@next/eslint-plugin-next": "^12.0.7",
+    "eslint": "^8.6.0",
+    "eslint-config-next": "12.0.7",
+    "next": "latest",
     "prettier": "^2.5.1"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "deploy": "npx now deploy",
-    "test": "react-scripts test",
-    "test:e2e": "playwright test --config=playwright.config.js",
-    "playwright:install": "npx playwright install chromium",
-    "eject": "react-scripts eject",
-    "prettier": "prettier --write \"src/**/*.{js,json,css}\""
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
   }
 }
