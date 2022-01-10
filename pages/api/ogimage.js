@@ -1,5 +1,6 @@
 import { createReadStream } from "fs";
 import { createServer } from "http";
+import { join } from "path";
 import { parse } from "url";
 import { loadEnvConfig } from "@next/env";
 import { launchChromium } from "playwright-aws-lambda";
@@ -51,8 +52,10 @@ export default async function handler(req, res) {
     res.write(buffer, "binary");
     res.end(null, "binary");
   } else {
+    const path = join(process.cwd(), "static", "og-image.png");
+
     // If the chart didn't generate correctly for any reason, serve a default fallback og:image.
     res.writeHead(200, { "Content-Type": "image/png" });
-    createReadStream("../static/og-image.png").pipe(res);
+    createReadStream(path).pipe(res);
   }
 }
