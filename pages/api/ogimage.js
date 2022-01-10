@@ -33,6 +33,7 @@ export default async function handler(req, res) {
   const page = await browserContext.newPage();
 
   const url = `${URL}/headless?${search.substr(1)}`;
+  console.log(`Requesting URL "${url}"`);
 
   const [_, response] = await Promise.all([
     page.goto(url),
@@ -52,6 +53,8 @@ export default async function handler(req, res) {
     res.write(buffer, "binary");
     res.end(null, "binary");
   } else {
+    console.error(`Server error status ${response.status()}`);
+
     const path = join(process.cwd(), "static", "og-image.png");
 
     // If the chart didn't generate correctly for any reason, serve a default fallback og:image.
