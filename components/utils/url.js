@@ -1,11 +1,17 @@
-export function getBaseUrl() {
-  const environment = process.env.NEXT_PUBLIC_ENVIRONMENT ?? "development";
+export function getBaseURL() {
+  let protocol = null;
+  if (typeof window !== "undefined") {
+    protocol = window.location.protocol;
+  } else if (process.env.ENV_PROTOCOL) {
+    protocol = process.env.ENV_PROTOCOL;
+  } else {
+    protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  }
 
-  return {
-    production: `https://${process.env.NEXT_PUBLIC_DEPLOYMENT_URL}`,
-    development: `http://localhost:3000`,
-    preview: `https://${process.env.NEXT_PUBLIC_DEPLOYMENT_URL}`,
-  }[environment];
+  const NEXT_PUBLIC_VERCEL_URL = process.env.NEXT_PUBLIC_VERCEL_URL;
+  const URL = `${protocol}://${NEXT_PUBLIC_VERCEL_URL}`;
+
+  return URL;
 }
 
 export function parse(string) {

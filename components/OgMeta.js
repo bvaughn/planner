@@ -1,6 +1,6 @@
 import Head from "next/head";
 
-import { getBaseUrl } from "./utils/url";
+import { getBaseURL } from "./utils/url";
 
 export default function OgMeta({
   url,
@@ -8,7 +8,7 @@ export default function OgMeta({
   title = "Planner JS",
   description = "Lightweight, interactive planner. Visualize tasks using an HTML canvas.",
 }) {
-  const baseUrl = getBaseUrl();
+  const baseUrl = getBaseURL();
 
   return (
     <Head>

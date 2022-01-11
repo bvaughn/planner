@@ -1,5 +1,4 @@
 import Document, { Html, Head, Main, NextScript } from "next/document";
-import { getBaseURL } from "../components/utils/url";
 import { useRouter } from "next/router";
 
 export default function CustomDocument() {
