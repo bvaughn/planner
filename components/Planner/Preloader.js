@@ -193,25 +193,27 @@ async function preloadImages(team, callback) {
     const owner = team[key];
 
     if (owner?.avatar != null && typeof owner?.avatar === "string") {
-      promises.push(
-        new Promise((resolve) => {
-          const image = new Image();
-          image.onload = () => {
-            ownerToImageMap.set(owner, {
-              height: image.naturalHeight,
-              image,
-              width: image.naturalWidth,
-            });
-
-            resolve();
-          };
-          image.src = owner.avatar;
-        })
-      );
+      promises.push(preloadImage(ownerToImageMap, owner));
     }
   }
 
   await Promise.all(promises);
 
   callback(ownerToImageMap);
+}
+
+function preloadImage(ownerToImageMap, owner) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => {
+      ownerToImageMap.set(owner, {
+        height: image.naturalHeight,
+        image,
+        width: image.naturalWidth,
+      });
+
+      resolve();
+    };
+    image.src = owner.avatar;
+  });
 }
