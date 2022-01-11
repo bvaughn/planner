@@ -11,9 +11,7 @@ export default function App({ ogUrl, ogImageUrl }) {
 }
 
 export async function getServerSideProps({ query, resolvedUrl }) {
-  let ogUrl;
-  let ogImageUrl;
-
+  let ogImageUrl = null;
   if (query.data) {
     ogImageUrl = `/api/ogimage?data=${query.data}`;
   }
