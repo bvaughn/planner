@@ -21,11 +21,6 @@ export function saveSearchToHistory(newSearch) {
     // Remove the leading "?"
     prevSearch = prevSearch.substr(1);
 
-    // Nested apostrophes are auto escaped by the "history" library,
-    // e.g. "jsurl2" serializes `team's` to `team*"s` which "history" converts to `team*%22s`.
-    // We need to manually undo this conversion before comparing new search strings to current ones.
-    prevSearch = prevSearch.replace(/\*%22/g, '*"');
-
     // Don't push a new History entry if the search string hasn't changed.
     if (prevSearch === newSearch) {
       return;

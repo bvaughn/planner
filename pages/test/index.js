@@ -13,7 +13,7 @@ export default function Test() {
       <ul>
         {Object.entries(URLS).map(([name, query]) => (
           <li key={name}>
-            <Link href={`/headless?${query}`}>{name}</Link>
+            <Link href={`/headless?data=${query}`}>{name}</Link>
           </li>
         ))}
       </ul>
@@ -21,7 +21,7 @@ export default function Test() {
       <ul>
         {Object.entries(URLS).map(([name, query]) => (
           <li key={name}>
-            <Link href={`/api/ogimage/?${query}`}>{name}</Link>
+            <Link href={`/api/ogimage/?data=${query}`}>{name}</Link>
           </li>
         ))}
       </ul>
@@ -30,9 +30,9 @@ export default function Test() {
 }
 
 const URLS = {
-  default: `(tasks~!(id~1~start~*2022-01-01~stop~*2022-03-15~name~Planner_JS~owner~planner)(start~*2022-01-15~stop~*2022-05-30~name~Plan_and_share_your_next_project_in_minutes~isOngoing~~owner~team)(start~*2022-02-01~stop~*2022-05-01~name~Lightweight_ightweight_planning_tool~dependency~1~owner~planner)~team~(planner~(name~Planner_JS~color~**H543e5b~avatar~*/static/avatar.png)team~(name~Your_team~color~**H22223B)))~`,
-  days: `(tasks~!(start~*2022-02-12~stop~*2022-02-13~name~Spring_cleaning~owner~timeoff)(start~*2022-02-14~stop~*2022-02-17~name~Work~owner~pro)~team~(pro~(name~Professional_Brian)timeoff~(name~Time_off_Brian)))~)`,
-  weeks: `(tasks~!(name~Week_A~start~*2022-01-03~stop~*2022-01-09~owner~Erin)(name~Week_B~start~*2022-01-10~stop~*2022-01-23~owner~Erin)(name~Week_C~start~*2022-01-17~stop~*2022-01-23~owner~Chris)~team~())~)`,
-  months: `(tasks~!(id~example~name~Design_API~owner~bvaughn~start~*2022-01-01~stop~*2022-03-15)(id~0~name~Write_API_documentation~owner~susan~start~*2022-03-01~stop~*2022-05-01~dependency~example)(id~1~name~Support_product_team_integration~owner~bvaughn~start~*2022-03-15~stop~*2022-05-15~isOngoing~~dependency~example)(id~2~name~Finish_project_carryover~owner~susan~start~*2022-01-01~stop~*2022-03-01)(id~3~name~GitHub_issue_support~owner~team~start~*2022-03-01~stop~*2022-04-01~isOngoing)~team~(bvaughn~(avatar~_N~name~Brian)team~(avatar~_N~name~Unclaimed)))~)`,
-  years: `(tasks~!(start~*2022-01-01~stop~*2022-06-30~name~H1_2022)(start~*2022-07-01~stop~*2022-12-31~name~H2_2022)(start~*2023-01-01~stop~*2023-06-30~name~H1_2023)(start~*2022-01-01~stop~*2022-12-31~name~*2022~owner~Other_team)~team~())~`,
+  default: `eyJ0YXNrcyI6W3siaWQiOjEsInN0YXJ0IjoiMjAyMi0wMS0wMSIsInN0b3AiOiIyMDIyLTAzLTE1IiwibmFtZSI6IlBsYW5uZXIgSlMiLCJvd25lciI6InBsYW5uZXIifSx7InN0YXJ0IjoiMjAyMi0wMS0xNSIsInN0b3AiOiIyMDIyLTA1LTMwIiwibmFtZSI6IlBsYW4gYW5kIHNoYXJlIHlvdXIgbmV4dCBwcm9qZWN0IGluIG1pbnV0ZXMiLCJpc09uZ29pbmciOnRydWUsIm93bmVyIjoidGVhbSJ9LHsic3RhcnQiOiIyMDIyLTAyLTAxIiwic3RvcCI6IjIwMjItMDUtMDEiLCJuYW1lIjoiTGlnaHR3ZWlnaHQgaWdodHdlaWdodCBwbGFubmluZyB0b29sIiwiZGVwZW5kZW5jeSI6MSwib3duZXIiOiJwbGFubmVyIn1dLCJ0ZWFtIjp7InBsYW5uZXIiOnsibmFtZSI6IlBsYW5uZXIgSlMiLCJjb2xvciI6IiM1NDNlNWIiLCJhdmF0YXIiOiIvc3RhdGljL2F2YXRhci5wbmcifSwidGVhbSI6eyJuYW1lIjoiWW91ciB0ZWFtIiwiY29sb3IiOiIjMjIyMjNCIn19fQ`,
+  days: `eyJ0YXNrcyI6W3sic3RhcnQiOiIyMDIyLTAyLTEyIiwic3RvcCI6IjIwMjItMDItMTMiLCJuYW1lIjoiU3ByaW5nIGNsZWFuaW5nIiwib3duZXIiOiJ0aW1lb2ZmIn0seyJzdGFydCI6IjIwMjItMDItMTQiLCJzdG9wIjoiMjAyMi0wMi0xNyIsIm5hbWUiOiJXb3JrIiwib3duZXIiOiJwcm8ifV0sInRlYW0iOnsicHJvIjp7Im5hbWUiOiJQcm9mZXNzaW9uYWwgQnJpYW4ifSwidGltZW9mZiI6eyJuYW1lIjoiVGltZSBvZmYgQnJpYW4ifX19`,
+  weeks: `eyJ0YXNrcyI6W3sibmFtZSI6IldlZWsgQSIsInN0YXJ0IjoiMjAyMi0wMS0wMyIsInN0b3AiOiIyMDIyLTAxLTA5Iiwib3duZXIiOiJFcmluIn0seyJuYW1lIjoiV2VlayBCIiwic3RhcnQiOiIyMDIyLTAxLTEwIiwic3RvcCI6IjIwMjItMDEtMjMiLCJvd25lciI6IkVyaW4ifSx7Im5hbWUiOiJXZWVrIEMiLCJzdGFydCI6IjIwMjItMDEtMTciLCJzdG9wIjoiMjAyMi0wMS0yMyIsIm93bmVyIjoiQ2hyaXMifV0sInRlYW0iOnt9fQ`,
+  months: `eyJ0YXNrcyI6W3siaWQiOiJleGFtcGxlIiwibmFtZSI6IkRlc2lnbiBBUEkiLCJvd25lciI6ImJ2YXVnaG4iLCJzdGFydCI6IjIwMjItMDEtMDEiLCJzdG9wIjoiMjAyMi0wMy0xNSJ9LHsiaWQiOjIsIm5hbWUiOiJGaW5pc2ggcHJvamVjdCBjYXJyeW92ZXIiLCJvd25lciI6InN1c2FuIiwic3RhcnQiOiIyMDIyLTAxLTAxIiwic3RvcCI6IjIwMjItMDMtMDEifSx7ImlkIjowLCJuYW1lIjoiV3JpdGUgQVBJIGRvY3VtZW50YXRpb24iLCJvd25lciI6InN1c2FuIiwic3RhcnQiOiIyMDIyLTAzLTAxIiwic3RvcCI6IjIwMjItMDUtMDEiLCJkZXBlbmRlbmN5IjoiZXhhbXBsZSJ9LHsiaWQiOjMsIm5hbWUiOiJHaXRIdWIgaXNzdWUgc3VwcG9ydCIsIm93bmVyIjoidGVhbSIsInN0YXJ0IjoiMjAyMi0wMy0wMSIsInN0b3AiOiIyMDIyLTA0LTAxIiwiaXNPbmdvaW5nIjp0cnVlfSx7ImlkIjoxLCJuYW1lIjoiU3VwcG9ydCBwcm9kdWN0IHRlYW0gaW50ZWdyYXRpb24iLCJvd25lciI6ImJ2YXVnaG4iLCJzdGFydCI6IjIwMjItMDMtMTUiLCJzdG9wIjoiMjAyMi0wNS0xNSIsImlzT25nb2luZyI6dHJ1ZSwiZGVwZW5kZW5jeSI6ImV4YW1wbGUifV0sInRlYW0iOnsiYnZhdWdobiI6eyJhdmF0YXIiOm51bGwsIm5hbWUiOiJCcmlhbiJ9LCJ0ZWFtIjp7ImF2YXRhciI6bnVsbCwibmFtZSI6IlVuY2xhaW1lZCJ9fX0`,
+  years: `eyJ0YXNrcyI6W3sic3RhcnQiOiIyMDIyLTAxLTAxIiwic3RvcCI6IjIwMjItMTItMzEiLCJuYW1lIjoiMjAyMiIsIm93bmVyIjoiT3RoZXIgdGVhbSJ9LHsic3RhcnQiOiIyMDIyLTAxLTAxIiwic3RvcCI6IjIwMjItMDYtMzAiLCJuYW1lIjoiSDEgMjAyMiJ9LHsic3RhcnQiOiIyMDIyLTA3LTAxIiwic3RvcCI6IjIwMjItMTItMzEiLCJuYW1lIjoiSDIgMjAyMiJ9LHsic3RhcnQiOiIyMDIzLTAxLTAxIiwic3RvcCI6IjIwMjMtMDYtMzAiLCJuYW1lIjoiSDEgMjAyMyJ9XSwidGVhbSI6e319`,
 };

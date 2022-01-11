@@ -1,7 +1,7 @@
-import { parse } from "jsurl2";
 import { useRouter } from "next/router";
 import Legend from "../../components/Legend";
 import Planner from "../../components/Planner";
+import { parse } from "../../components/utils/url";
 import * as defaultConfig from "../../components/Planner/defaultConfig";
 import styles from "./headless.module.css";
 
@@ -19,11 +19,15 @@ Object.entries(defaultConfig).forEach(([key, value]) => {
   }
 });
 
-const OUTER_STYLE = {
+const OUTER_STYLE_CROPPED = {
   padding: `${OG_IMAGE_MARGIN}px`,
   width: OG_IMAGE_WIDTH,
-  height: OG_IMAGE_HEIGHT,
   fontSize: `${SCALED_CONFIG.FONT_SIZE_NORMAL}px`,
+};
+
+const OUTER_STYLE = {
+  ...OUTER_STYLE_CROPPED,
+  height: OG_IMAGE_HEIGHT,
 };
 
 const INNER_STYLE = {
@@ -32,19 +36,24 @@ const INNER_STYLE = {
 };
 
 export default function Headless() {
-  const { query } = useRouter();
+  const {
+    query: { cropped, data },
+  } = useRouter();
 
-  const keys = Object.keys(query);
-  if (keys.length === 0) {
+  if (!data) {
     return null;
   }
 
-  const { tasks, team } = parse(keys[0], { deURI: true });
+  const { tasks, team } = parse(data);
 
   const scale = window.devicePixelRatio;
 
   return (
-    <div id="ogImageContainer" className={styles.Container} style={OUTER_STYLE}>
+    <div
+      id="ogImageContainer"
+      className={styles.Container}
+      style={cropped ? OUTER_STYLE_CROPPED : OUTER_STYLE}
+    >
       <div>
         <Legend
           avatarSize={SCALED_CONFIG.AVATAR_SIZE}

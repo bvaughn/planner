@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import { parse, stringify } from "jsurl2";
 import history from "history/browser";
 import { saveSearchToHistory, subscribeToHistory } from "../utils/history";
+import { parse, stringify } from "../utils/url";
 
 function getSnapshot() {
   try {
@@ -26,7 +26,7 @@ function saveToOgImage(stringified) {
     return;
   }
 
-  const url = `${window.location.protocol}//${window.location.host}/api/ogimage/?${stringified}`;
+  const url = `${window.location.protocol}//${window.location.host}/api/ogimage/?data=${stringified}`;
 
   const ogImage = document.head.querySelector('[property="og:image"]');
   if (ogImage) {
@@ -48,7 +48,7 @@ export default function useURLData(defaultData) {
   const data = useMemo(() => {
     if (snapshotString) {
       try {
-        const parsed = parse(snapshotString, { deURI: true });
+        const parsed = parse(snapshotString);
 
         // Parsed value should be an object.
         // If it's still a string then parsing was unsuccessful.
