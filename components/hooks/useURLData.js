@@ -21,24 +21,29 @@ function saveToLocation(data) {
   saveSearchToHistory(stringified);
 }
 
-function saveToOgImage(stringified) {
+const OG_IMAGE_PROPERTIES = ["og:image", "twitter:image"];
+const OG_URL_PROPERTIES = ["og:url", "twitter:url"];
+
+function saveToOpenGraph(stringified) {
   if (stringified === null) {
     return;
   }
 
   const url = `${window.location.protocol}//${window.location.host}/api/ogimage/?data=${stringified}`;
 
-  const ogImage = document.head.querySelector('[property="og:image"]');
-  if (ogImage) {
-    ogImage.setAttribute("content", url);
-  }
+  OG_IMAGE_PROPERTIES.forEach((name) => {
+    const meta = document.head.querySelector(`[property="${name}"]`);
+    if (meta) {
+      meta.setAttribute("content", url);
+    }
+  });
 
-  const twitterImage = document.head.querySelector(
-    '[property="twitter:image"]'
-  );
-  if (twitterImage) {
-    twitterImage.setAttribute("content", url);
-  }
+  OG_URL_PROPERTIES.forEach((name) => {
+    const meta = document.head.querySelector(`[property="${name}"]`);
+    if (meta) {
+      meta.setAttribute("content", window.location.href);
+    }
+  });
 }
 
 // Params defaultData and validateCallback should both be stable/memoized
@@ -65,7 +70,7 @@ export default function useURLData(defaultData) {
   // Update the og:image to match chart data.
   useEffect(() => {
     const stringToSAve = snapshotString || stringify(defaultData);
-    saveToOgImage(stringToSAve);
+    saveToOpenGraph(stringToSAve);
   }, [defaultData, snapshotString]);
 
   // No need to mirror in React state; just save to the location.
