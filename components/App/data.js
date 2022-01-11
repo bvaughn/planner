@@ -26,7 +26,7 @@ export const team = {
   planner: {
     name: "Planner JS",
     color: "#543e5b",
-    avatar: "/static/avatar.png",
+    avatar: "/avatar.png",
   },
   team: {
     name: "Your team",

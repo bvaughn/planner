@@ -7,7 +7,7 @@ export default function Loading() {
       <Image
         className={styles.Image}
         alt="Planner logo"
-        src="/static/avatar.png"
+        src="/avatar.png"
         width={231}
         height={231}
       />

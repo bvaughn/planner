@@ -66,7 +66,7 @@ export default async function handler(req, res) {
     res.write(buffer, "binary");
     res.end(null, "binary");
   } else {
-    const path = join(process.cwd(), "static", "og-image.png");
+    const path = join(process.cwd(), "public", "og-image.png");
 
     // If the chart didn't generate correctly for any reason, serve a default fallback og:image.
     res.writeHead(200, { "Content-Type": "image/png" });
