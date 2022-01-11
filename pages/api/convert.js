@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   const encoded = btoa(JSON.stringify(decoded));
 
   res.writeHead(302, {
-    Location: `/?${encoded}`,
+    Location: `/?data=${encoded}`,
   });
   res.end();
 }

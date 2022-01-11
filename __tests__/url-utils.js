@@ -5,7 +5,7 @@ const PUBLIC_URL = "http://localhost:3000";
 function getUrlForData(data) {
   const stringified = stringify(data);
 
-  return `${PUBLIC_URL}/?${stringified}`;
+  return `${PUBLIC_URL}/?data=${stringified}`;
 }
 
 function getUrlForOgImage(data) {
