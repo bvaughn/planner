@@ -1,10 +1,27 @@
 import AppComponent from "../components/App";
+import OgMeta from "../components/OgMeta";
 
-export default function App() {
-  return <AppComponent />;
+export default function App({ ogUrl, ogImageUrl }) {
+  return (
+    <>
+      <OgMeta url={ogUrl} imageUrl={ogImageUrl} />
+      <AppComponent />
+    </>
+  );
 }
 
-export async function getServerSideProps() {
-  // Opt this route out of static pre-rendering so we can set dynamic OG meta tags on the server side.
-  return { props: {} };
+export async function getServerSideProps({ query, resolvedUrl }) {
+  let ogUrl;
+  let ogImageUrl;
+
+  if (query.data) {
+    ogImageUrl = `/api/ogimage?data=${query.data}`;
+  }
+
+  return {
+    props: {
+      ogUrl: resolvedUrl,
+      ogImageUrl,
+    },
+  };
 }
