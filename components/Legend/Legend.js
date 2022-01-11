@@ -1,5 +1,6 @@
+/* eslint-disable @next/next/no-img-element */
+
 import { useMemo } from "react";
-import Image from "next/image";
 import {
   BLACK,
   WHITE,
@@ -67,7 +68,7 @@ export default function Legend({ avatarSize = 24, tasks, team }) {
               }}
             >
               {avatar && (
-                <Image
+                <img
                   alt={`${name} avatar`}
                   className={styles.AvatarImage}
                   style={{ avatarSize }}
