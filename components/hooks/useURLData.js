@@ -7,7 +7,8 @@ function getSnapshot() {
   try {
     const search = history.location.search;
     if (search) {
-      return search.substr(1);
+      const params = new URLSearchParams(search);
+      return params.get("data");
     }
   } catch (error) {
     console.error(error);
@@ -18,7 +19,7 @@ function getSnapshot() {
 function saveToLocation(data) {
   const stringified = stringify(data);
 
-  saveSearchToHistory(stringified);
+  saveSearchToHistory(`data=${stringified}`);
 }
 
 const OG_IMAGE_PROPERTIES = ["og:image", "twitter:image"];
