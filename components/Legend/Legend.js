@@ -26,7 +26,7 @@ export default function Legend({ avatarSize = 24, tasks, team }) {
 
     for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
       const task = tasks[taskIndex];
-      const ownerKey = task.owner || "Team";
+      const ownerKey = (task.owner || "Team").toLowerCase();
       if (!map.has(ownerKey)) {
         map.set(ownerKey, {
           name: ownerKey.toLowerCase(),
