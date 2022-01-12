@@ -210,7 +210,7 @@ export default function createDrawingUtils({
     const ownerName = getOwnerName(task, team);
     const owner = team[task.owner];
 
-    const color = owner?.color || getColorForString(ownerName);
+    const color = task.color || owner?.color || getColorForString(ownerName);
     const avatar = ownerToImageMap.get(owner);
 
     drawOwnerAvatar(context, taskRect, ownerName, color, avatar);
