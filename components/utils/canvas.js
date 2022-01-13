@@ -1,29 +1,25 @@
 const VERTICAL_TEXT_OFFSET = 1;
 
-let patternCanvas = null;
-
 export function drawDiagonalStripePattern(backgroundColor, color) {
-  if (patternCanvas === null) {
-    patternCanvas = document.createElement("canvas");
-    patternCanvas.width = 300;
-    patternCanvas.height = 300;
+  const canvas = document.createElement("canvas");
+  canvas.width = 300;
+  canvas.height = 300;
 
-    const context = patternCanvas.getContext("2d");
+  const context = canvas.getContext("2d");
 
-    var numberOfStripes = 100;
-    for (var i = 0; i < numberOfStripes * 2; i++) {
-      var thickness = 300 / numberOfStripes;
-      context.beginPath();
-      context.strokeStyle = i % 2 ? backgroundColor : color;
-      context.lineWidth = thickness;
-      context.lineCap = "round";
-      context.moveTo(i * thickness + thickness / 2 - 300, 0);
-      context.lineTo(0 + i * thickness + thickness / 2, 300);
-      context.stroke();
-    }
+  var numberOfStripes = 100;
+  for (var i = 0; i < numberOfStripes * 2; i++) {
+    var thickness = 300 / numberOfStripes;
+    context.beginPath();
+    context.strokeStyle = i % 2 ? backgroundColor : color;
+    context.lineWidth = thickness;
+    context.lineCap = "round";
+    context.moveTo(i * thickness + thickness / 2 - 300, 0);
+    context.lineTo(0 + i * thickness + thickness / 2, 300);
+    context.stroke();
   }
 
-  return patternCanvas;
+  return canvas;
 }
 
 export function drawTextToFitWidth(context, text, x, y, width, height) {

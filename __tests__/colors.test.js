@@ -139,4 +139,32 @@ test.describe("Colors", () => {
       "canvas-screenshot-high-contrast-foreground-color.png"
     );
   });
+
+  test("should draw different patterns for ongoing tasks with different colors", async ({
+    page,
+  }) => {
+    await loadData(page, {
+      tasks: [
+        {
+          start: "2022-01-01",
+          stop: "2022-01-02",
+          name: "Item one",
+          isOngoing: true,
+          color: "#a00",
+        },
+        {
+          start: "2022-01-02",
+          stop: "2022-01-03",
+          name: "Item two",
+          isOngoing: true,
+          color: "#00a",
+        },
+      ],
+      team: {},
+    });
+
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "canvas-screenshot-ongoing-pattern-colors.png"
+    );
+  });
 });
