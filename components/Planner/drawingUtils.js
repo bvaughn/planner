@@ -14,6 +14,7 @@ import {
   getColorForString,
   getContrastRatio,
   hexToRgba,
+  highlight,
 } from "../utils/color";
 import { getOwnerName } from "../utils/task";
 import { getIntervalLabel } from "../utils/time";
@@ -110,8 +111,17 @@ export default function createDrawingUtils({
     return new DOMRect(x, y, width, height);
   }
 
-  function drawOwnerAvatar(context, taskRect, ownerName, color, avatar) {
+  function drawOwnerAvatar(
+    context,
+    taskRect,
+    ownerName,
+    color,
+    avatar,
+    isHovered
+  ) {
     const avatarRect = getAvatarRect(taskRect);
+
+    const hoverColor = isHovered ? highlight(color) : color;
 
     if (avatar?.image) {
       drawAvatarCircle(
@@ -132,9 +142,11 @@ export default function createDrawingUtils({
         avatarRect.height,
         AVATAR_SIZE / 2
       );
-      context.fillStyle = color;
+      context.fillStyle = hoverColor;
       context.fill();
 
+      // Use color for contrast, rather than hoverColor,
+      // because it's jarring for the foreground to change color on hover.
       context.font = `bold ${FONT_SIZE_AVATAR}px sans-serif`;
       context.fillStyle =
         getContrastRatio(color, WHITE) > getContrastRatio(color, BLACK)
@@ -151,13 +163,13 @@ export default function createDrawingUtils({
     }
   }
 
-  function drawTaskText(context, task, taskRect, metadata) {
+  function drawTaskText(context, task, taskRect, metadata, isHovered) {
     const textRect = getTextRect(taskRect);
 
     context.font = `${FONT_SIZE_NORMAL}px sans-serif`;
-    context.fillStyle = DARK_GRAY;
+    context.fillStyle = isHovered ? BLACK : DARK_GRAY;
 
-    const measuredTextWidth = drawTextToFitWidth(
+    const clippedTextWidth = drawTextToFitWidth(
       context,
       task.name,
       textRect.x,
@@ -166,16 +178,24 @@ export default function createDrawingUtils({
       textRect.height
     );
 
-    if (measuredTextWidth !== null) {
-      metadata.textDOMRects.set(
-        task.name,
-        new DOMRect(textRect.x, textRect.y, measuredTextWidth, textRect.height)
-      );
-    }
+    metadata.taskDOMMetadata.set(task, {
+      isClipped: clippedTextWidth !== null,
+      rect: taskRect,
+    });
   }
 
-  function drawTaskBar(context, metadata, task, taskRect, color, chartWidth) {
+  function drawTaskBar(
+    context,
+    metadata,
+    task,
+    taskRect,
+    color,
+    chartWidth,
+    isHovered
+  ) {
     const barRect = getBarRect(taskRect);
+
+    const hoverColor = isHovered ? highlight(color) : color;
 
     drawRoundedRect(
       context,
@@ -187,10 +207,13 @@ export default function createDrawingUtils({
     );
 
     if (task.isOngoing) {
-      const pattern = drawDiagonalStripePattern(WHITE, hexToRgba(color, 0.5));
+      const pattern = drawDiagonalStripePattern(
+        WHITE,
+        hexToRgba(hoverColor, 0.5)
+      );
       context.fillStyle = context.createPattern(pattern, "repeat");
     } else {
-      context.fillStyle = color;
+      context.fillStyle = hoverColor;
     }
 
     context.fill();
@@ -202,10 +225,13 @@ export default function createDrawingUtils({
     metadata,
     team,
     ownerToImageMap,
-    chartWidth
+    chartWidth,
+    hoveredTask
   ) {
     const task = metadata.tasks[taskIndex];
     const taskRect = getTaskRect(task, metadata, chartWidth);
+
+    const isHovered = task === hoveredTask;
 
     const ownerName = getOwnerName(task, team);
     const owner = team[task.owner];
@@ -213,9 +239,17 @@ export default function createDrawingUtils({
     const color = task.color || owner?.color || getColorForString(ownerName);
     const avatar = ownerToImageMap.get(owner);
 
-    drawOwnerAvatar(context, taskRect, ownerName, color, avatar);
-    drawTaskText(context, task, taskRect, metadata);
-    drawTaskBar(context, metadata, task, taskRect, color, chartWidth);
+    drawOwnerAvatar(context, taskRect, ownerName, color, avatar, isHovered);
+    drawTaskText(context, task, taskRect, metadata, isHovered);
+    drawTaskBar(
+      context,
+      metadata,
+      task,
+      taskRect,
+      color,
+      chartWidth,
+      isHovered
+    );
   }
 
   function drawUnitGrid(context, metadata, chartWidth, chartHeight) {

@@ -177,7 +177,7 @@ export default function Preloader({ children, tasks, team }) {
       taskToRowIndexMap,
       taskToTemporalMap,
       tasks,
-      textDOMRects: new Map(),
+      taskDOMMetadata: new Map(),
       unit,
     };
   }, [tasks]);

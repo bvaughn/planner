@@ -26,6 +26,27 @@ export function hexToRgba(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+export function rgbToHex(rgb) {
+  const [r, g, b] = rgb;
+  const number = (r << 16) | (g << 8) | b;
+  return `#${number.toString(16).padStart(6, 0)}`;
+}
+
+const HIGHLIGHT_OFFSET = 30;
+
+export function highlight(hex) {
+  const rgb = hexToRgb(hex);
+  if (getContrastRatio(hex, WHITE) > getContrastRatio(hex, BLACK)) {
+    // Lighten
+    return rgbToHex(
+      rgb.map((value) => Math.min(255, value + HIGHLIGHT_OFFSET))
+    );
+  } else {
+    // Darken
+    return rgbToHex(rgb.map((value) => Math.max(0, value - HIGHLIGHT_OFFSET)));
+  }
+}
+
 export function getLuminance(color) {
   const rgb = Array.isArray(color) ? color : hexToRgb(color);
 

@@ -2,6 +2,8 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import Tooltip from "./Tooltip";
 import createDrawingUtils from "./drawingUtils";
 
+const TOOLTIP_HEIGHT = 20;
+
 const DEFAULT_TOOLTIP_STATE = {
   label: null,
   left: null,
@@ -40,6 +42,7 @@ export default function Canvas({
   const canvasRef = useRef();
 
   const [tooltipState, setTooltipState] = useState(DEFAULT_TOOLTIP_STATE);
+  const [hoveredTask, setHoveredTask] = useState(null);
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
@@ -62,7 +65,15 @@ export default function Canvas({
     drawUnitHeaders(context, metadata, width);
 
     for (let taskIndex = 0; taskIndex < metadata.tasks.length; taskIndex++) {
-      drawTaskRow(context, taskIndex, metadata, team, ownerToImageMap, width);
+      drawTaskRow(
+        context,
+        taskIndex,
+        metadata,
+        team,
+        ownerToImageMap,
+        width,
+        hoveredTask
+      );
     }
 
     // Draw arrows between dependencies.
@@ -81,36 +92,41 @@ export default function Canvas({
     drawUnitGrid,
     drawUnitHeaders,
     height,
+    hoveredTask,
     metadata,
     ownerToImageMap,
     team,
     width,
   ]);
 
+  const handleMouseLeave = (event) => {
+    setTooltipState(DEFAULT_TOOLTIP_STATE);
+  };
+
   const handleMouseMove = (event) => {
     const { offsetX, offsetY } = event.nativeEvent;
 
-    for (let [text, rect] of metadata.textDOMRects) {
+    for (let [task, { isClipped, rect }] of metadata.taskDOMMetadata) {
       if (
         offsetX >= rect.x &&
         offsetX <= rect.x + rect.width &&
         offsetY >= rect.y &&
         offsetY <= rect.y + rect.height
       ) {
-        if (offsetX <= width / 2) {
-          setTooltipState({
-            left: offsetX + TOOLTIP_OFFSET,
-            right: null,
-            text,
-            top: offsetY + TOOLTIP_OFFSET,
-          });
-        } else {
-          setTooltipState({
-            left: null,
-            right: width - offsetX + TOOLTIP_OFFSET,
-            text,
-            top: offsetY + TOOLTIP_OFFSET,
-          });
+        setHoveredTask(task);
+
+        if (isClipped) {
+          let left = null;
+          let right = null;
+          if (offsetX <= width / 2) {
+            left = offsetX + TOOLTIP_OFFSET;
+          } else {
+            right = width - offsetX + TOOLTIP_OFFSET;
+          }
+
+          let top = Math.min(offsetY + TOOLTIP_OFFSET, height - TOOLTIP_HEIGHT);
+
+          setTooltipState({ left, right, text: task.name, top });
         }
         return;
       }
@@ -124,6 +140,7 @@ export default function Canvas({
       <canvas
         ref={canvasRef}
         height={height}
+        onMouseLeave={handleMouseLeave}
         onMouseMove={handleMouseMove}
         width={width}
       />
