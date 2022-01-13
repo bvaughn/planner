@@ -219,19 +219,20 @@ export default function createDrawingUtils({
   }
 
   function drawUnitGrid(context, metadata, chartWidth, chartHeight) {
+    let prevX = 0;
+
     // We don't need to draw the first grid line because it's always left-aligned.
-    for (let index = 1; index < metadata.intervalRange.length - 1; index++) {
+    for (let index = 1; index <= metadata.intervalRange.length - 1; index++) {
       const date = metadata.intervalRange[index];
 
       const x = getDateLocation(date, metadata, chartWidth);
-      const y = HEADER_HEIGHT + MARGIN;
 
       context.beginPath();
-      context.strokeStyle = LIGHT_GRAY;
-      context.lineWidth = LINE_WIDTH;
-      context.moveTo(x, y);
-      context.lineTo(x, chartHeight);
-      context.stroke();
+      context.fillStyle = index % 2 === 0 ? LIGHT_GRAY : WHITE;
+      context.rect(prevX, 0, x - prevX, chartHeight);
+      context.fill();
+
+      prevX = x;
     }
   }
 
@@ -241,9 +242,9 @@ export default function createDrawingUtils({
       for (let index = 0; index < metadata.intervalRange.length - 1; index++) {
         const date = metadata.intervalRange[index];
 
-        const x = getDateLocation(date, metadata, chartWidth);
+        const x = getDateLocation(date, metadata, chartWidth) + MARGIN;
         const y = MARGIN;
-        const width = intervalWidth;
+        const width = intervalWidth - MARGIN * 2;
         const height = HEADER_HEIGHT;
 
         const text = getIntervalLabel(date, metadata.unit);
