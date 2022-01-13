@@ -51,10 +51,10 @@ export default function Headless() {
   return (
     <div
       id="ogImageContainer"
-      className={styles.Container}
+      className={styles.OuterWrapper}
       style={cropped ? OUTER_STYLE_CROPPED : OUTER_STYLE}
     >
-      <div>
+      <div className={styles.InnerWrapper}>
         <Legend
           avatarSize={SCALED_CONFIG.AVATAR_SIZE}
           tasks={tasks}

@@ -134,4 +134,53 @@ test.describe("api/ogimage", () => {
       "og-image-screenshot-years.png"
     );
   });
+
+  test("should properly vertically align content that is too tall for the og:image container", async ({
+    page,
+  }) => {
+    await loadOgImage(page, {
+      tasks: [
+        {
+          name: "One",
+          start: "2022-01-01",
+          stop: "2022-01-01",
+        },
+        {
+          name: "Two",
+          start: "2022-01-01",
+          stop: "2022-01-01",
+        },
+        {
+          name: "Three",
+          start: "2022-01-01",
+          stop: "2022-01-01",
+        },
+        {
+          name: "Four",
+          start: "2022-01-01",
+          stop: "2022-01-01",
+        },
+        {
+          name: "Five",
+          start: "2022-01-01",
+          stop: "2022-01-01",
+        },
+        {
+          name: "Six",
+          start: "2022-01-01",
+          stop: "2022-01-01",
+        },
+        {
+          name: "Seven",
+          start: "2022-01-01",
+          stop: "2022-01-01",
+        },
+      ],
+      team: {},
+    });
+
+    expect(await page.locator("img").screenshot()).toMatchSnapshot(
+      "og-image-screenshot-vertical-overflow.png"
+    );
+  });
 });

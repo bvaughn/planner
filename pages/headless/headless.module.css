@@ -1,8 +1,12 @@
-.Container {
+.OuterWrapper {
   display: flex;
   flex-direction: column;
   justify-content: center;
   margin: auto;
+}
+
+.InnerWrapper {
+  max-height: 100%;
 }
 
 .Canvas {
