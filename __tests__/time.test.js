@@ -6,6 +6,48 @@ const {
 } = require("./page-utils");
 
 test.describe("Time", () => {
+  test("should handle multi-hour intervals", async ({ page }) => {
+    await loadData(page, {
+      tasks: [
+        {
+          name: "Morning coffee",
+          start: "2022-04-01 08:00",
+          stop: "2022-04-01 08:15",
+          owner: "Brian",
+        },
+        {
+          name: "Work",
+          start: "2022-04-01 08:30",
+          stop: "2022-04-01 12:00",
+          owner: "Brian",
+        },
+        {
+          name: "Lunch break",
+          start: "2022-04-01 12:00",
+          stop: "2022-04-01 12:30",
+          owner: "Brian",
+        },
+        {
+          name: "Work",
+          start: "2022-04-01 12:30",
+          stop: "2022-04-01 17:00",
+          owner: "Brian",
+        },
+        {
+          name: "Dinner",
+          start: "2022-04-01 17:30",
+          stop: "2022-04-01 18:00",
+          owner: "Brian",
+        },
+      ],
+      team: {},
+    });
+
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "canvas-screenshot-hours.png"
+    );
+  });
+
   test("should handle multi-day intervals", async ({ page }) => {
     await loadData(page, {
       tasks: [

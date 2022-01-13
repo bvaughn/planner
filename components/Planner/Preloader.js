@@ -1,5 +1,11 @@
 import { useLayoutEffect, useMemo, useState } from "react";
-import { getIntervalRange, getIntervalUnit, fromString } from "../utils/time";
+import {
+  getIntervalRange,
+  getIntervalUnit,
+  getEndOfDay,
+  getStartOfDay,
+  fromString,
+} from "../utils/time";
 
 // TODO Make sure the Preloader isn't over-rendering.
 export default function Preloader({ children, tasks, team }) {
@@ -151,10 +157,12 @@ export default function Preloader({ children, tasks, team }) {
     let unit = "day";
     let intervalRange = [];
     if (sortedTasks.length > 0) {
-      const minDate = taskToTemporalMap.get(sortedTasks[0]).start;
-      const maxDate = taskToTemporalMap.get(
+      const firstDate = taskToTemporalMap.get(sortedTasks[0]).start;
+      const minDate = getStartOfDay(firstDate);
+      const lastDate = taskToTemporalMap.get(
         sortedTasks[sortedTasks.length - 1]
       ).stop;
+      const maxDate = getEndOfDay(lastDate);
 
       unit = getIntervalUnit(minDate, maxDate);
       intervalRange = getIntervalRange(minDate, maxDate);

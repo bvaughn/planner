@@ -1,10 +1,12 @@
 import { Temporal } from "@js-temporal/polyfill";
 
-export const MILLISECONDS_IN_DAY = 1000 * 60 * 60 * 24;
+export const MILLISECONDS_IN_HOUR = 1000 * 60 * 60;
+export const MILLISECONDS_IN_DAY = MILLISECONDS_IN_HOUR * 24;
 export const MILLISECONDS_IN_WEEK = MILLISECONDS_IN_DAY * 7;
 export const MILLISECONDS_IN_MONTH = MILLISECONDS_IN_DAY * 31; // Rough approximation
 export const MILLISECONDS_IN_YEAR = MILLISECONDS_IN_DAY * 365;
 
+export const INTERVAL_UNIT_HOUR = "hours";
 export const INTERVAL_UNIT_DAY = "day";
 export const INTERVAL_UNIT_WEEK = "week";
 export const INTERVAL_UNIT_MONTH = "month";
@@ -28,6 +30,11 @@ export function fromMilliseconds(milliseconds) {
 }
 
 export function fromString(dateString, timeString = "00:00") {
+  if (dateString.includes(" ")) {
+    const pieces = dateString.split(" ");
+    dateString = pieces[0];
+    timeString = pieces[1];
+  }
   return Temporal.Instant.from(`${dateString}T${timeString}Z`);
 }
 
@@ -35,8 +42,20 @@ export function subtract(temporal, milliseconds) {
   return temporal.subtract(Temporal.Duration.from({ milliseconds }));
 }
 
+export function getStartOfDay(temporal) {
+  const dateString = temporal.toString().substr(0, 10);
+  return fromString(dateString);
+}
+
+export function getEndOfDay(temporal) {
+  const dateString = temporal.toString().substr(0, 10);
+  return fromString(dateString, "23:59:59");
+}
+
 export function getIntervalLabel(date, unit) {
   switch (unit) {
+    case INTERVAL_UNIT_HOUR:
+      return format(date, { hour: "numeric" }).toLowerCase();
     case INTERVAL_UNIT_DAY:
       return format(date, { weekday: "short" });
     case INTERVAL_UNIT_WEEK:
@@ -58,6 +77,15 @@ export function getIntervalRange(startDate, stopDate) {
   const stopTime = stopDate.epochMilliseconds;
   const unit = getIntervalUnit(startDate, stopDate);
   switch (unit) {
+    case INTERVAL_UNIT_HOUR: {
+      return [
+        fromMilliseconds(startTime),
+        fromMilliseconds(startTime + MILLISECONDS_IN_HOUR * 6),
+        fromMilliseconds(startTime + MILLISECONDS_IN_HOUR * 12),
+        fromMilliseconds(startTime + MILLISECONDS_IN_HOUR * 18),
+        fromMilliseconds(stopTime),
+      ];
+    }
     case INTERVAL_UNIT_DAY:
     case INTERVAL_UNIT_WEEK:
     case INTERVAL_UNIT_YEAR: {
@@ -102,6 +130,8 @@ export function getIntervalRange(startDate, stopDate) {
 export function getIntervalSize(startDate, stopDate) {
   const unit = getIntervalUnit(startDate, stopDate);
   switch (unit) {
+    case INTERVAL_UNIT_HOUR:
+      return MILLISECONDS_IN_HOUR;
     case INTERVAL_UNIT_DAY:
       return MILLISECONDS_IN_DAY;
     case INTERVAL_UNIT_WEEK:
@@ -116,7 +146,7 @@ export function getIntervalSize(startDate, stopDate) {
 export function getIntervalUnit(start, stop) {
   const delta = stop.epochMilliseconds - start.epochMilliseconds;
   if (delta < MILLISECONDS_IN_DAY) {
-    return INTERVAL_UNIT_DAY;
+    return INTERVAL_UNIT_HOUR;
   } else if (delta < MILLISECONDS_IN_WEEK) {
     return INTERVAL_UNIT_DAY;
   } else if (delta < MILLISECONDS_IN_MONTH) {
