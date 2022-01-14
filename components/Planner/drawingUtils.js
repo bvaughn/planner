@@ -381,6 +381,7 @@ export default function createDrawingUtils({
 
   return {
     drawDependencyConnections,
+    getTaskRect,
     drawTaskRow,
     drawUnitGrid,
     drawUnitHeaders,

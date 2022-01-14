@@ -171,7 +171,7 @@ export default function MouseControls({
   // Hide the active context menu if it's visible
   useEffect(() => {
     if (state.type === "context-menu") {
-      const hide = () => {
+      const hide = (event) => {
         dispatch({ type: "hide" });
 
         setActiveTask(null);
@@ -233,12 +233,24 @@ export default function MouseControls({
       };
 
       return (
-        <ul ref={overlayRef} className={styles.ContextMenu}>
-          <li className={styles.ContextMenuItem} onClick={copyTaskToClipboard}>
+        <ul
+          data-testname="ContextMenu"
+          ref={overlayRef}
+          className={styles.ContextMenu}
+        >
+          <li
+            data-testname="ContextMenu-CopyTaskDetails"
+            className={styles.ContextMenuItem}
+            onClick={copyTaskToClipboard}
+          >
             Copy task details
           </li>
           {task.url != null && (
-            <li className={styles.ContextMenuItem} onClick={openTaskURL}>
+            <li
+              data-testname="ContextMenu-OpenURL"
+              className={styles.ContextMenuItem}
+              onClick={openTaskURL}
+            >
               Open task URL
             </li>
           )}
