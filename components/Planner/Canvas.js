@@ -23,7 +23,13 @@ export default function Canvas({
   const TASK_ROW_HEIGHT =
     MARGIN + AVATAR_SIZE + MARGIN + TASK_BAR_HEIGHT + MARGIN;
 
-  const drawingUtils = useMemo(() => createDrawingUtils(config), [config]);
+  const {
+    drawDependencyConnections,
+    drawTaskRow,
+    drawUnitGrid,
+    drawUnitHeaders,
+    getTaskRect,
+  } = useMemo(() => createDrawingUtils(config), [config]);
 
   const height = HEADER_HEIGHT + metadata.maxRowIndex * TASK_ROW_HEIGHT;
 
@@ -35,16 +41,11 @@ export default function Canvas({
     const canvas = canvasRef.current;
 
     // HACK Expose these values on the global space so that Playwright can use them for e2e tests.
-    window.__PLANNER_METADATA_FOR_TEST__ = metadata;
-    window.__PLANNER_DRAWING_UTILS_FOR_TEST__ = drawingUtils;
-    window.__PLANNER_TASKS_FOR_TEST__ = tasks;
-
-    const {
-      drawDependencyConnections,
-      drawTaskRow,
-      drawUnitGrid,
-      drawUnitHeaders,
-    } = drawingUtils;
+    window.__PLANNER_TEST_ONLY_FIND_TASK_RECT = (taskName) => {
+      const task = tasks.find(({ name }) => name === taskName);
+      const rect = getTaskRect(task, metadata, width);
+      return rect;
+    };
 
     const scale = window.devicePixelRatio;
     canvas.width = Math.floor(width * scale);
@@ -86,13 +87,24 @@ export default function Canvas({
       );
     });
   }, [
-    drawingUtils,
+    // Drawing utils methods
+    drawDependencyConnections,
+    drawTaskRow,
+    drawUnitGrid,
+    drawUnitHeaders,
+    getTaskRect,
+
+    // Canvas dimenions
     height,
-    hoveredTask,
+    width,
+
+    // Task/team data
     metadata,
     ownerToImageMap,
     team,
-    width,
+
+    // Component state
+    hoveredTask,
   ]);
 
   return (

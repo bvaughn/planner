@@ -56,14 +56,9 @@ test.describe("Mouse controls", () => {
     const points = await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
 
-      const metadata = window.__PLANNER_METADATA_FOR_TEST__;
-      const drawingUtils = window.__PLANNER_DRAWING_UTILS_FOR_TEST__;
-      const tasks = window.__PLANNER_TASKS_FOR_TEST__;
-
-      const task = tasks.find(
-        ({ name }) => name === "Long text that gets clipped"
+      const rect = window.__PLANNER_TEST_ONLY_FIND_TASK_RECT(
+        "Long text that gets clipped"
       );
-      const rect = drawingUtils.getTaskRect(task, metadata, canvas.offsetWidth);
 
       const x = rect.x + rect.width / 2;
       const y = rect.y + rect.height / 2;
@@ -136,12 +131,7 @@ test.describe("Mouse controls", () => {
     await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
 
-      const metadata = window.__PLANNER_METADATA_FOR_TEST__;
-      const drawingUtils = window.__PLANNER_DRAWING_UTILS_FOR_TEST__;
-      const tasks = window.__PLANNER_TASKS_FOR_TEST__;
-
-      const task = tasks.find(({ name }) => name === "Short text");
-      const rect = drawingUtils.getTaskRect(task, metadata, canvas.offsetWidth);
+      const rect = window.__PLANNER_TEST_ONLY_FIND_TASK_RECT("Short text");
 
       const x = rect.x + rect.width / 2;
       const y = rect.y + rect.height / 2;
@@ -166,12 +156,8 @@ test.describe("Mouse controls", () => {
     await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
 
-      const metadata = window.__PLANNER_METADATA_FOR_TEST__;
-      const drawingUtils = window.__PLANNER_DRAWING_UTILS_FOR_TEST__;
-      const tasks = window.__PLANNER_TASKS_FOR_TEST__;
-
-      const task = tasks.find(({ name }) => name === "Task with no URL");
-      const rect = drawingUtils.getTaskRect(task, metadata, canvas.offsetWidth);
+      const rect =
+        window.__PLANNER_TEST_ONLY_FIND_TASK_RECT("Task with no URL");
 
       const x = rect.x + rect.width / 2;
       const y = rect.y + rect.height / 2;
@@ -207,12 +193,7 @@ test.describe("Mouse controls", () => {
     await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
 
-      const metadata = window.__PLANNER_METADATA_FOR_TEST__;
-      const drawingUtils = window.__PLANNER_DRAWING_UTILS_FOR_TEST__;
-      const tasks = window.__PLANNER_TASKS_FOR_TEST__;
-
-      const task = tasks.find(({ name }) => name === "Task with a URL");
-      const rect = drawingUtils.getTaskRect(task, metadata, canvas.offsetWidth);
+      const rect = window.__PLANNER_TEST_ONLY_FIND_TASK_RECT("Task with a URL");
 
       const x = rect.x + rect.width / 2;
       const y = rect.y + rect.height / 2;
@@ -245,16 +226,8 @@ test.describe("Mouse controls", () => {
       page.evaluate((code) => {
         const canvas = document.querySelector("canvas");
 
-        const metadata = window.__PLANNER_METADATA_FOR_TEST__;
-        const drawingUtils = window.__PLANNER_DRAWING_UTILS_FOR_TEST__;
-        const tasks = window.__PLANNER_TASKS_FOR_TEST__;
-
-        const task = tasks.find(({ name }) => name === "Task with a URL");
-        const rect = drawingUtils.getTaskRect(
-          task,
-          metadata,
-          canvas.offsetWidth
-        );
+        const rect =
+          window.__PLANNER_TEST_ONLY_FIND_TASK_RECT("Task with a URL");
 
         const x = rect.x + rect.width / 2;
         const y = rect.y + rect.height / 2;
