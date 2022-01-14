@@ -14,6 +14,13 @@ export function getBaseURL() {
   return URL;
 }
 
+export function openInNewTab(url) {
+  const anchor = document.createElement("a");
+  anchor.target = "_blank";
+  anchor.href = url;
+  anchor.click();
+}
+
 export function parse(string) {
   return JSON.parse(atob(string));
 }

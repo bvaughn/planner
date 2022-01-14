@@ -5,4 +5,5 @@
   color: #fff;
   border-radius: 0.25em;
   display: inline-block;
+  user-select: none;
 }

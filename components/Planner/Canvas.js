@@ -1,6 +1,8 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import Tooltip from "./Tooltip";
 import createDrawingUtils from "./drawingUtils";
+import { openInNewTab } from "../utils/url";
+import useContextMenu from "../hooks/useContextMenu";
 
 const TOOLTIP_HEIGHT = 20;
 
@@ -40,6 +42,34 @@ export default function Canvas({
   const height = HEADER_HEIGHT + metadata.maxRowIndex * TASK_ROW_HEIGHT;
 
   const canvasRef = useRef();
+
+  const contextMenu = useContextMenu(canvasRef, (x, y) => {
+    const match = findTaskAtPoint(x, y, metadata);
+    if (match) {
+      const { task } = match;
+      const items = [
+        {
+          name: "Copy task details",
+          callback: () => {
+            navigator.clipboard.writeText(JSON.stringify(task));
+          },
+        },
+      ];
+
+      if (task.url) {
+        items.push({
+          name: "Open task URL",
+          callback: () => {
+            openInNewTab(task.url);
+          },
+        });
+      }
+
+      return items;
+    }
+
+    return null;
+  });
 
   const [tooltipState, setTooltipState] = useState(DEFAULT_TOOLTIP_STATE);
   const [hoveredTask, setHoveredTask] = useState(null);
@@ -99,40 +129,58 @@ export default function Canvas({
     width,
   ]);
 
+  const handleClick = (event) => {
+    const { offsetX, offsetY, target: canvas } = event.nativeEvent;
+
+    const match = findTaskAtPoint(offsetX, offsetY, metadata);
+    if (match) {
+      const { task } = match;
+
+      canvas.style.cursor = "default";
+
+      if (task.url) {
+        openInNewTab(task.url);
+      }
+    }
+  };
+
   const handleMouseLeave = (event) => {
+    const { target: canvas } = event.nativeEvent;
+
     setTooltipState(DEFAULT_TOOLTIP_STATE);
+
+    canvas.style.cursor = "default";
   };
 
   const handleMouseMove = (event) => {
-    const { offsetX, offsetY } = event.nativeEvent;
+    const { offsetX, offsetY, target: canvas } = event.nativeEvent;
 
-    for (let [task, { isClipped, rect }] of metadata.taskDOMMetadata) {
-      if (
-        offsetX >= rect.x &&
-        offsetX <= rect.x + rect.width &&
-        offsetY >= rect.y &&
-        offsetY <= rect.y + rect.height
-      ) {
-        setHoveredTask(task);
+    const match = findTaskAtPoint(offsetX, offsetY, metadata);
+    if (match) {
+      const { domMetadata, task } = match;
 
-        if (isClipped) {
-          let left = null;
-          let right = null;
-          if (offsetX <= width / 2) {
-            left = offsetX + TOOLTIP_OFFSET;
-          } else {
-            right = width - offsetX + TOOLTIP_OFFSET;
-          }
+      setHoveredTask(task);
 
-          let top = Math.min(offsetY + TOOLTIP_OFFSET, height - TOOLTIP_HEIGHT);
+      canvas.style.cursor = task.url ? "pointer" : "default";
 
-          setTooltipState({ left, right, text: task.name, top });
+      if (domMetadata.isClipped) {
+        let left = null;
+        let right = null;
+        if (offsetX <= width / 2) {
+          left = offsetX + TOOLTIP_OFFSET;
+        } else {
+          right = width - offsetX + TOOLTIP_OFFSET;
         }
-        return;
-      }
-    }
 
-    setTooltipState(DEFAULT_TOOLTIP_STATE);
+        let top = Math.min(offsetY + TOOLTIP_OFFSET, height - TOOLTIP_HEIGHT);
+
+        setTooltipState({ left, right, text: task.name, top });
+      }
+    } else {
+      setTooltipState(DEFAULT_TOOLTIP_STATE);
+
+      canvas.style.cursor = "default";
+    }
   };
 
   return (
@@ -140,11 +188,30 @@ export default function Canvas({
       <canvas
         ref={canvasRef}
         height={height}
+        onClick={handleClick}
         onMouseLeave={handleMouseLeave}
         onMouseMove={handleMouseMove}
         width={width}
       />
       <Tooltip {...tooltipState} />
+      {contextMenu}
     </>
   );
+}
+
+function findTaskAtPoint(x, y, metadata) {
+  for (let [task, domMetadata] of metadata.taskDOMMetadata) {
+    const { isClipped, rect } = domMetadata;
+
+    if (
+      x >= rect.x &&
+      x <= rect.x + rect.width &&
+      y >= rect.y &&
+      y <= rect.y + rect.height
+    ) {
+      return { domMetadata, task };
+    }
+  }
+
+  return null;
 }
