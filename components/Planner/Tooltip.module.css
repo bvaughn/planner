@@ -1,9 +1,0 @@
-.Tooltip {
-  position: absolute;
-  padding: 0.25em 0.5em;
-  background-color: rgba(0, 0, 0, 0.75);
-  color: #fff;
-  border-radius: 0.25em;
-  display: inline-block;
-  user-select: none;
-}

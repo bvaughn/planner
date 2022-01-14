@@ -1,17 +1,8 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import MouseControls from "./MouseControls";
 import Tooltip from "./Tooltip";
 import createDrawingUtils from "./drawingUtils";
 import { openInNewTab } from "../utils/url";
-import useContextMenu from "../hooks/useContextMenu";
-
-const TOOLTIP_HEIGHT = 20;
-
-const DEFAULT_TOOLTIP_STATE = {
-  label: null,
-  left: null,
-  right: null,
-  top: null,
-};
 
 // Processes data; arguably should be moved into Preloader component.
 export default function Canvas({
@@ -43,35 +34,6 @@ export default function Canvas({
 
   const canvasRef = useRef();
 
-  const contextMenu = useContextMenu(canvasRef, (x, y) => {
-    const match = findTaskAtPoint(x, y, metadata);
-    if (match) {
-      const { task } = match;
-      const items = [
-        {
-          name: "Copy task details",
-          callback: () => {
-            navigator.clipboard.writeText(JSON.stringify(task));
-          },
-        },
-      ];
-
-      if (task.url) {
-        items.push({
-          name: "Open task URL",
-          callback: () => {
-            openInNewTab(task.url);
-          },
-        });
-      }
-
-      return items;
-    }
-
-    return null;
-  });
-
-  const [tooltipState, setTooltipState] = useState(DEFAULT_TOOLTIP_STATE);
   const [hoveredTask, setHoveredTask] = useState(null);
 
   useLayoutEffect(() => {
@@ -129,72 +91,16 @@ export default function Canvas({
     width,
   ]);
 
-  const handleClick = (event) => {
-    const { offsetX, offsetY, target: canvas } = event.nativeEvent;
-
-    const match = findTaskAtPoint(offsetX, offsetY, metadata);
-    if (match) {
-      const { task } = match;
-
-      canvas.style.cursor = "default";
-
-      if (task.url) {
-        openInNewTab(task.url);
-      }
-    }
-  };
-
-  const handleMouseLeave = (event) => {
-    const { target: canvas } = event.nativeEvent;
-
-    setTooltipState(DEFAULT_TOOLTIP_STATE);
-
-    canvas.style.cursor = "default";
-  };
-
-  const handleMouseMove = (event) => {
-    const { offsetX, offsetY, target: canvas } = event.nativeEvent;
-
-    const match = findTaskAtPoint(offsetX, offsetY, metadata);
-    if (match) {
-      const { domMetadata, task } = match;
-
-      setHoveredTask(task);
-
-      canvas.style.cursor = task.url ? "pointer" : "default";
-
-      if (domMetadata.isClipped) {
-        let left = null;
-        let right = null;
-        if (offsetX <= width / 2) {
-          left = offsetX + TOOLTIP_OFFSET;
-        } else {
-          right = width - offsetX + TOOLTIP_OFFSET;
-        }
-
-        let top = Math.min(offsetY + TOOLTIP_OFFSET, height - TOOLTIP_HEIGHT);
-
-        setTooltipState({ left, right, text: task.name, top });
-      }
-    } else {
-      setTooltipState(DEFAULT_TOOLTIP_STATE);
-
-      canvas.style.cursor = "default";
-    }
-  };
-
   return (
     <>
-      <canvas
-        ref={canvasRef}
-        height={height}
-        onClick={handleClick}
-        onMouseLeave={handleMouseLeave}
-        onMouseMove={handleMouseMove}
-        width={width}
+      <canvas ref={canvasRef} height={height} width={width} />
+      <MouseControls
+        canvasRef={canvasRef}
+        findTaskAtPoint={findTaskAtPoint}
+        metadata={metadata}
+        offset={TOOLTIP_OFFSET}
+        setActiveTask={setHoveredTask}
       />
-      <Tooltip {...tooltipState} />
-      {contextMenu}
     </>
   );
 }
