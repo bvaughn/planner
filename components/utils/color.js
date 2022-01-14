@@ -1,6 +1,6 @@
 export const BLACK = "#000000";
 export const BLACK_TRANSPARENT = "rgba(0,0,0,.25)";
-export const DARK_GRAY = "#333333";
+export const DARK_GRAY = "#555555";
 export const LIGHT_GRAY = "#f6f6f6";
 export const SLATE_GRAY = "#c2d0df";
 export const WHITE = "#ffffff";

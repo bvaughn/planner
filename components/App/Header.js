@@ -15,6 +15,8 @@ function getSnapshot() {
 
 async function copyLocation() {
   await navigator.clipboard.writeText(window.location);
+
+  // TODO Show toast instead
   window.alert("Use the URL (in your clipboard) to share this plan.");
 }
 

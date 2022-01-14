@@ -1,15 +1,8 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import MouseControls from "./MouseControls";
 import Tooltip from "./Tooltip";
 import createDrawingUtils from "./drawingUtils";
-
-const TOOLTIP_HEIGHT = 20;
-
-const DEFAULT_TOOLTIP_STATE = {
-  label: null,
-  left: null,
-  right: null,
-  top: null,
-};
+import { openInNewTab } from "../utils/url";
 
 // Processes data; arguably should be moved into Preloader component.
 export default function Canvas({
@@ -35,17 +28,24 @@ export default function Canvas({
     drawTaskRow,
     drawUnitGrid,
     drawUnitHeaders,
+    getTaskRect,
   } = useMemo(() => createDrawingUtils(config), [config]);
 
   const height = HEADER_HEIGHT + metadata.maxRowIndex * TASK_ROW_HEIGHT;
 
   const canvasRef = useRef();
 
-  const [tooltipState, setTooltipState] = useState(DEFAULT_TOOLTIP_STATE);
   const [hoveredTask, setHoveredTask] = useState(null);
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
+
+    // HACK Expose these values on the global space so that Playwright can use them for e2e tests.
+    window.__PLANNER_TEST_ONLY_FIND_TASK_RECT = (taskName) => {
+      const task = tasks.find(({ name }) => name === taskName);
+      const rect = getTaskRect(task, metadata, width);
+      return rect;
+    };
 
     const scale = window.devicePixelRatio;
     canvas.width = Math.floor(width * scale);
@@ -87,64 +87,53 @@ export default function Canvas({
       );
     });
   }, [
+    // Drawing utils methods
     drawDependencyConnections,
     drawTaskRow,
     drawUnitGrid,
     drawUnitHeaders,
+    getTaskRect,
+
+    // Canvas dimenions
     height,
-    hoveredTask,
+    width,
+
+    // Task/team data
     metadata,
     ownerToImageMap,
     team,
-    width,
+
+    // Component state
+    hoveredTask,
   ]);
-
-  const handleMouseLeave = (event) => {
-    setTooltipState(DEFAULT_TOOLTIP_STATE);
-  };
-
-  const handleMouseMove = (event) => {
-    const { offsetX, offsetY } = event.nativeEvent;
-
-    for (let [task, { isClipped, rect }] of metadata.taskDOMMetadata) {
-      if (
-        offsetX >= rect.x &&
-        offsetX <= rect.x + rect.width &&
-        offsetY >= rect.y &&
-        offsetY <= rect.y + rect.height
-      ) {
-        setHoveredTask(task);
-
-        if (isClipped) {
-          let left = null;
-          let right = null;
-          if (offsetX <= width / 2) {
-            left = offsetX + TOOLTIP_OFFSET;
-          } else {
-            right = width - offsetX + TOOLTIP_OFFSET;
-          }
-
-          let top = Math.min(offsetY + TOOLTIP_OFFSET, height - TOOLTIP_HEIGHT);
-
-          setTooltipState({ left, right, text: task.name, top });
-        }
-        return;
-      }
-    }
-
-    setTooltipState(DEFAULT_TOOLTIP_STATE);
-  };
 
   return (
     <>
-      <canvas
-        ref={canvasRef}
-        height={height}
-        onMouseLeave={handleMouseLeave}
-        onMouseMove={handleMouseMove}
-        width={width}
+      <canvas ref={canvasRef} height={height} width={width} />
+      <MouseControls
+        canvasRef={canvasRef}
+        findTaskAtPoint={findTaskAtPoint}
+        metadata={metadata}
+        offset={TOOLTIP_OFFSET}
+        setActiveTask={setHoveredTask}
       />
-      <Tooltip {...tooltipState} />
     </>
   );
+}
+
+function findTaskAtPoint(x, y, metadata) {
+  for (let [task, domMetadata] of metadata.taskDOMMetadata) {
+    const { isClipped, rect } = domMetadata;
+
+    if (
+      x >= rect.x &&
+      x <= rect.x + rect.width &&
+      y >= rect.y &&
+      y <= rect.y + rect.height
+    ) {
+      return { domMetadata, task };
+    }
+  }
+
+  return null;
 }
