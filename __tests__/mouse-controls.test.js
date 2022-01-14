@@ -45,14 +45,16 @@ const TASKS = [
 ];
 
 test.describe("Mouse controls", () => {
-  test("should show tooltips when mousing over items that have clipped text", async ({
-    page,
-  }) => {
+  test.beforeEach(async ({ page }) => {
     await loadData(page, {
       tasks: TASKS,
       team: {},
     });
+  });
 
+  test("should show tooltips when mousing over items that have clipped text", async ({
+    page,
+  }) => {
     const points = await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
 
@@ -123,11 +125,6 @@ test.describe("Mouse controls", () => {
   test("should not show tooltips when mousing over items that have full text", async ({
     page,
   }) => {
-    await loadData(page, {
-      tasks: TASKS,
-      team: {},
-    });
-
     await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
 
@@ -148,11 +145,6 @@ test.describe("Mouse controls", () => {
   test("should show a context menu with the option to copy task name", async ({
     page,
   }) => {
-    await loadData(page, {
-      tasks: TASKS,
-      team: {},
-    });
-
     await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
 
@@ -185,11 +177,6 @@ test.describe("Mouse controls", () => {
   test("should show a context menu with the option to copy the task url", async ({
     page,
   }) => {
-    await loadData(page, {
-      tasks: TASKS,
-      team: {},
-    });
-
     await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
 
@@ -215,13 +202,9 @@ test.describe("Mouse controls", () => {
     );
   });
 
-  test("should open the task url when clicked", async ({ context, page }) => {
-    await loadData(page, {
-      tasks: TASKS,
-      team: {},
-    });
-
-    const [newPage] = await Promise.all([
+  test("should open the task url", async ({ context, page }) => {
+    // Clicking on the task should open the URL
+    const [newPageA] = await Promise.all([
       context.waitForEvent("page"),
       page.evaluate((code) => {
         const canvas = document.querySelector("canvas");
@@ -237,7 +220,37 @@ test.describe("Mouse controls", () => {
       }, dispatchEventCodeString),
     ]);
 
-    expect(await newPage.locator("body").screenshot()).toMatchSnapshot(
+    expect(await newPageA.locator("body").screenshot()).toMatchSnapshot(
+      "new-tab-task-url.png"
+    );
+
+    // The context menu should also be able to do this
+    await page.evaluate((code) => {
+      const canvas = document.querySelector("canvas");
+
+      const rect = window.__PLANNER_TEST_ONLY_FIND_TASK_RECT("Task with a URL");
+
+      const x = rect.x + rect.width / 2;
+      const y = rect.y + rect.height / 2;
+
+      const fn = eval(code);
+      fn(canvas, "mousemove", x, y);
+      fn(canvas, "contextmenu", x, y);
+    }, dispatchEventCodeString);
+
+    await page.waitForSelector('[data-testname="ContextMenu-OpenURL"]');
+
+    const [newPageB] = await Promise.all([
+      context.waitForEvent("page"),
+      await page.evaluate(() => {
+        const option = document.querySelector(
+          '[data-testname="ContextMenu-OpenURL"]'
+        );
+        option.click();
+      }),
+    ]);
+
+    expect(await newPageB.locator("body").screenshot()).toMatchSnapshot(
       "new-tab-task-url.png"
     );
   });
