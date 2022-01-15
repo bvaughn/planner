@@ -5,10 +5,20 @@ const {
   setEditorText,
 } = require("./page-utils");
 
-function dispatchMouseEvent(element, type, offsetX, offsetY) {
+function dispatchMouseEvent(element, type, pointOrRect) {
   const event = new CustomEvent(type);
-  event.offsetX = offsetX;
-  event.offsetY = offsetY;
+
+  if (pointOrRect) {
+    const { x, y, width, height } = pointOrRect;
+    event.offsetX = x;
+    if (width > 0) {
+      event.offsetX += width / 2;
+    }
+    event.offsetY = y;
+    if (height > 0) {
+      event.offsetY += height / 2;
+    }
+  }
 
   window.event = event;
 
@@ -57,18 +67,22 @@ test.describe("Mouse controls", () => {
   }) => {
     const points = await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
-
       const rect = window.__PLANNER_TEST_ONLY_FIND_TASK_RECT(
         "Long text that gets clipped"
       );
 
-      const x = rect.x + rect.width / 2;
-      const y = rect.y + rect.height / 2;
-
       const fn = eval(code);
-      fn(canvas, "mousemove", x, y);
+      fn(canvas, "mousemove", rect);
 
-      return { over: { x, y }, off: { x: rect.x - 10, y } };
+      const over = rect;
+      const off = {
+        x: rect.x - 10,
+        y: rect.y,
+        height: rect.height,
+        width: 0,
+      };
+
+      return { over, off };
     }, dispatchEventCodeString);
 
     expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
@@ -80,10 +94,8 @@ test.describe("Mouse controls", () => {
       ({ code, points }) => {
         const canvas = document.querySelector("canvas");
 
-        const { x, y } = points.off;
-
         const fn = eval(code);
-        fn(canvas, "mousemove", x, y);
+        fn(canvas, "mousemove", points.off);
       },
       { points, code: dispatchEventCodeString }
     );
@@ -97,10 +109,8 @@ test.describe("Mouse controls", () => {
       ({ code, points }) => {
         const canvas = document.querySelector("canvas");
 
-        const { x, y } = points.over;
-
         const fn = eval(code);
-        fn(canvas, "mousemove", x, y);
+        fn(canvas, "mousemove", points.over);
       },
       { points, code: dispatchEventCodeString }
     );
@@ -127,14 +137,10 @@ test.describe("Mouse controls", () => {
   }) => {
     await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
-
       const rect = window.__PLANNER_TEST_ONLY_FIND_TASK_RECT("Short text");
 
-      const x = rect.x + rect.width / 2;
-      const y = rect.y + rect.height / 2;
-
       const fn = eval(code);
-      fn(canvas, "mousemove", x, y);
+      fn(canvas, "mousemove", rect);
     }, dispatchEventCodeString);
 
     expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
@@ -147,16 +153,12 @@ test.describe("Mouse controls", () => {
   }) => {
     await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
-
       const rect =
         window.__PLANNER_TEST_ONLY_FIND_TASK_RECT("Task with no URL");
 
-      const x = rect.x + rect.width / 2;
-      const y = rect.y + rect.height / 2;
-
       const fn = eval(code);
-      fn(canvas, "mousemove", x, y);
-      fn(canvas, "contextmenu", x, y);
+      fn(canvas, "mousemove", rect);
+      fn(canvas, "contextmenu", rect);
     }, dispatchEventCodeString);
 
     expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
@@ -179,15 +181,11 @@ test.describe("Mouse controls", () => {
   }) => {
     await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
-
       const rect = window.__PLANNER_TEST_ONLY_FIND_TASK_RECT("Task with a URL");
 
-      const x = rect.x + rect.width / 2;
-      const y = rect.y + rect.height / 2;
-
       const fn = eval(code);
-      fn(canvas, "mousemove", x, y);
-      fn(canvas, "contextmenu", x, y);
+      fn(canvas, "mousemove", rect);
+      fn(canvas, "contextmenu", rect);
     }, dispatchEventCodeString);
 
     expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
@@ -208,15 +206,11 @@ test.describe("Mouse controls", () => {
       context.waitForEvent("page"),
       page.evaluate((code) => {
         const canvas = document.querySelector("canvas");
-
         const rect =
           window.__PLANNER_TEST_ONLY_FIND_TASK_RECT("Task with a URL");
 
-        const x = rect.x + rect.width / 2;
-        const y = rect.y + rect.height / 2;
-
         const fn = eval(code);
-        fn(canvas, "click", x, y);
+        fn(canvas, "click", rect);
       }, dispatchEventCodeString),
     ]);
 
@@ -227,15 +221,11 @@ test.describe("Mouse controls", () => {
     // The context menu should also be able to do this
     await page.evaluate((code) => {
       const canvas = document.querySelector("canvas");
-
       const rect = window.__PLANNER_TEST_ONLY_FIND_TASK_RECT("Task with a URL");
 
-      const x = rect.x + rect.width / 2;
-      const y = rect.y + rect.height / 2;
-
       const fn = eval(code);
-      fn(canvas, "mousemove", x, y);
-      fn(canvas, "contextmenu", x, y);
+      fn(canvas, "mousemove", rect);
+      fn(canvas, "contextmenu", rect);
     }, dispatchEventCodeString);
 
     await page.waitForSelector('[data-testname="ContextMenu-OpenURL"]');

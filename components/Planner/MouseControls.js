@@ -50,10 +50,12 @@ function reduce(state, action) {
 
 export default function MouseControls({
   canvasRef,
+  contextMenuHorizontalOffset,
+  contextMenuVerticalOffset,
   findTaskAtPoint,
   metadata,
-  offset,
   setActiveTask,
+  tooltipOffset,
 }) {
   const [state, dispatch] = useReducer(reduce, DEFAULT_STATE);
 
@@ -205,20 +207,33 @@ export default function MouseControls({
       return;
     }
 
+    const horizontalOffset =
+      state.type === "context-menu"
+        ? contextMenuHorizontalOffset
+        : tooltipOffset;
+    const verticalOffset =
+      state.type === "context-menu" ? contextMenuVerticalOffset : tooltipOffset;
+
     const { offsetX, offsetY } = state.cursor;
 
     let left = Math.min(
-      offsetX + offset,
+      offsetX + horizontalOffset,
       canvas.offsetWidth - overlay.offsetWidth
     );
     let top = Math.min(
-      offsetY + offset,
+      offsetY + contextMenuVerticalOffset,
       canvas.offsetHeight - overlay.offsetHeight
     );
 
     overlay.style.left = `${left}px`;
     overlay.style.top = `${top}px`;
-  }, [canvasRef, offset, state]);
+  }, [
+    canvasRef,
+    contextMenuHorizontalOffset,
+    contextMenuVerticalOffset,
+    state,
+    tooltipOffset,
+  ]);
 
   switch (state.type) {
     case "context-menu": {

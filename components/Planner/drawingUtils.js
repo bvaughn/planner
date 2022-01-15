@@ -81,25 +81,25 @@ export default function createDrawingUtils({
     const width = getDateLocation(stop, metadata, chartWidth) - x;
     const height = TASK_ROW_HEIGHT;
 
-    return new DOMRect(x, y, width, height);
+    return { x, y, width, height };
   }
 
   function getBarRect(taskRect) {
-    return new DOMRect(
-      taskRect.x,
-      taskRect.y + taskRect.height - TASK_BAR_HEIGHT - MARGIN,
-      taskRect.width,
-      TASK_BAR_HEIGHT
-    );
+    return {
+      x: taskRect.x,
+      y: taskRect.y + taskRect.height - TASK_BAR_HEIGHT - MARGIN,
+      width: taskRect.width,
+      height: TASK_BAR_HEIGHT,
+    };
   }
 
   function getAvatarRect(taskRect) {
-    return new DOMRect(
-      taskRect.x,
-      taskRect.y + MARGIN,
-      AVATAR_SIZE,
-      AVATAR_SIZE
-    );
+    return {
+      x: taskRect.x,
+      y: taskRect.y + MARGIN,
+      width: AVATAR_SIZE,
+      height: AVATAR_SIZE,
+    };
   }
 
   function getTextRect(taskRect) {
@@ -108,7 +108,7 @@ export default function createDrawingUtils({
     const x = taskRect.x + AVATAR_SIZE + MARGIN;
     const y = taskRect.y + MARGIN;
 
-    return new DOMRect(x, y, width, height);
+    return { x, y, width, height };
   }
 
   function drawOwnerAvatar(

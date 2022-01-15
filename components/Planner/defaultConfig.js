@@ -9,7 +9,9 @@ export const TASK_BAR_HEIGHT = 8;
 export const LINE_SEGMENT_MIN_LENGTH = 20;
 export const ARROW_SIZE = 10;
 
-export const TOOLTIP_OFFSET = 15;
+export const CONTEXT_MENU_HORIZONTAL_OFFSET = 10;
+export const CONTEXT_MENU_VERTICAL_OFFSET = 6;
+export const TOOLTIP_OFFSET = 12;
 
 export const FONT_SIZE_AVATAR = 15;
 export const FONT_SIZE_HEADER = 13;

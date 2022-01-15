@@ -15,6 +15,8 @@ export default function Canvas({
 }) {
   const {
     AVATAR_SIZE,
+    CONTEXT_MENU_HORIZONTAL_OFFSET,
+    CONTEXT_MENU_VERTICAL_OFFSET,
     HEADER_HEIGHT,
     MARGIN,
     TASK_BAR_HEIGHT,
@@ -101,6 +103,7 @@ export default function Canvas({
     // Task/team data
     metadata,
     ownerToImageMap,
+    tasks,
     team,
 
     // Component state
@@ -112,10 +115,12 @@ export default function Canvas({
       <canvas ref={canvasRef} height={height} width={width} />
       <MouseControls
         canvasRef={canvasRef}
+        contextMenuHorizontalOffset={CONTEXT_MENU_HORIZONTAL_OFFSET}
+        contextMenuVerticalOffset={CONTEXT_MENU_VERTICAL_OFFSET}
         findTaskAtPoint={findTaskAtPoint}
         metadata={metadata}
-        offset={TOOLTIP_OFFSET}
         setActiveTask={setHoveredTask}
+        tooltipOffset={TOOLTIP_OFFSET}
       />
     </>
   );
