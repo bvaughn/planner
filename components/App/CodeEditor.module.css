@@ -25,6 +25,7 @@
   flex: 1 1 auto;
   font-family: monospace;
   font-size: 12px;
+  background-color: #181c2d !important;
 }
 
 .Pre {
@@ -40,5 +41,5 @@
   resize: none;
 }
 .TextArea:focus {
-  background-color: #181c2d;
+  background-color: #292d3e;
 }

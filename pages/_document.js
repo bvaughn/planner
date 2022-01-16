@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 
 export default function CustomDocument() {
   return (
-    <Html>
+    <Html lang="en">
       <Head>
         <link
           rel="apple-touch-icon"

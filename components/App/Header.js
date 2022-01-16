@@ -66,6 +66,7 @@ export default function Header({ team, tasks }) {
           target="_blank"
           rel="noreferrer"
           className={styles.ButtonOrLink}
+          title="View project source in GitHub"
         >
           <GitHubIcon width={20} height={20} />
         </a>
