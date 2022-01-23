@@ -46,8 +46,6 @@ export default function Headless() {
 
   const { tasks, team } = parse(data);
 
-  const scale = window.devicePixelRatio;
-
   return (
     <div
       id="ogImageContainer"
