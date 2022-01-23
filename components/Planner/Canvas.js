@@ -1,6 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import MouseControls from "./MouseControls";
-import Tooltip from "./Tooltip";
 import createDrawingUtils from "./drawingUtils";
 import { openInNewTab } from "../utils/url";
 
