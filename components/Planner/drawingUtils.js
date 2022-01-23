@@ -166,31 +166,41 @@ export default function createDrawingUtils({
       } else {
         const character = ownerName.charAt(0).toUpperCase();
 
-        if (isOngoing) {
-          drawRoundedRect(
-            context,
-            avatarRect.x,
-            avatarRect.y,
-            avatarRect.width,
-            avatarRect.height,
-            {
-              topLeft: CORNER_RADIUS,
-              bottomLeft: CORNER_RADIUS,
-              topRight: 0,
-              bottomRight: 0,
-            }
-          );
-          context.fillStyle = color;
-          context.fill();
-        }
+        drawRoundedRect(
+          context,
+          avatarRect.x,
+          avatarRect.y,
+          avatarRect.width,
+          avatarRect.height,
+          {
+            topLeft: CORNER_RADIUS,
+            bottomLeft: CORNER_RADIUS,
+            topRight: 0,
+            bottomRight: 0,
+          }
+        );
+        context.fillStyle = color;
+        context.fill();
 
-        // Use color for contrast, rather than hoverColor,
-        // because it's jarring for the foreground to change color on hover.
-        context.font = `bold ${FONT_SIZE_AVATAR}px sans-serif`;
-        context.fillStyle =
+        // Draw a border between solid color avatar and task.
+        context.beginPath();
+        context.rect(
+          avatarRect.x + avatarRect.width,
+          avatarRect.y,
+          LINE_WIDTH,
+          avatarRect.height
+        );
+        context.fillStyle = WHITE;
+        context.fill();
+
+        // Contrast against the base color, rather than the hoverColor,
+        // because hoverColor changes on mouse-over and it's jarring for the foreground to change color on hover.
+        const contrastColor =
           getContrastRatio(color, WHITE) > getContrastRatio(color, BLACK)
             ? WHITE
             : BLACK;
+        context.font = `bold ${FONT_SIZE_AVATAR}px sans-serif`;
+        context.fillStyle = contrastColor;
         drawTextToCenterWithin(
           context,
           character,

@@ -72,7 +72,7 @@ export default function Legend({
               className={styles.ColorChip}
               style={{
                 backgroundColor,
-                width: avatar ? '' : `${avatarSize}px`,
+                width: avatar ? "" : `${avatarSize}px`,
                 height: `${avatarSize}px`,
                 borderRadius: `${cornerRadius}px`,
               }}

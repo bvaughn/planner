@@ -1,14 +1,14 @@
 const { test, expect } = require("@playwright/test");
 const { loadOgImage } = require("./page-utils");
-const images = require('./images');
+const images = require("./images");
 
 const TASKS = [
   {
     name: "Task",
     start: "2022-01-03",
     stop: "2022-01-09",
-    owner: "brian"
-  }
+    owner: "brian",
+  },
 ];
 
 test.describe("image", () => {
@@ -17,7 +17,7 @@ test.describe("image", () => {
       tasks: TASKS,
       team: {
         brian: {
-          avatar: images.SQUARE
+          avatar: images.SQUARE,
         },
       },
     });
@@ -32,7 +32,7 @@ test.describe("image", () => {
       tasks: TASKS,
       team: {
         brian: {
-          avatar: images.TALL
+          avatar: images.TALL,
         },
       },
     });
@@ -47,7 +47,7 @@ test.describe("image", () => {
       tasks: TASKS,
       team: {
         brian: {
-          avatar: images.WIDE
+          avatar: images.WIDE,
         },
       },
     });
