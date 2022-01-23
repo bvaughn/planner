@@ -3,7 +3,7 @@ import {
   drawDiagonalStripePattern,
   drawRoundedRect,
   drawTextToCenterWithin,
-  drawTextToFitWidth,
+  drawTextToFit,
 } from "../utils/canvas";
 import {
   BLACK,
@@ -17,7 +17,7 @@ import {
   highlight,
 } from "../utils/color";
 import { getOwnerName } from "../utils/task";
-import { getIntervalLabel } from "../utils/time";
+import { getDurationLabel, getIntervalLabel } from "../utils/time";
 
 export default function createDrawingUtils({
   ARROW_SIZE,
@@ -26,15 +26,15 @@ export default function createDrawingUtils({
   FONT_SIZE_AVATAR,
   FONT_SIZE_HEADER,
   FONT_SIZE_NORMAL,
+  FONT_SIZE_SMALL,
   HEADER_HEIGHT,
   LINE_SEGMENT_MIN_LENGTH,
   LINE_WIDTH,
   MARGIN,
-  TASK_BAR_HEIGHT,
+  PADDING,
   TOOLTIP_OFFSET,
 }) {
-  const TASK_ROW_HEIGHT =
-    MARGIN + AVATAR_SIZE + MARGIN + TASK_BAR_HEIGHT + MARGIN;
+  const TASK_ROW_HEIGHT = MARGIN + AVATAR_SIZE + MARGIN;
 
   function getIntervalWidth(chartWidth, metadata) {
     let intervalWidth = 0;
@@ -72,6 +72,10 @@ export default function createDrawingUtils({
     return chartWidth * offset;
   }
 
+  function shouldShowAvatar(taskRect, image) {
+    return taskRect.width > getAvatarRect(taskRect, image).width * 2;
+  }
+
   function getTaskRect(task, metadata, chartWidth) {
     const rowIndex = metadata.taskToRowIndexMap.get(task);
     const { start, stop } = metadata.taskToTemporalMap.get(task);
@@ -86,100 +90,177 @@ export default function createDrawingUtils({
 
   function getBarRect(taskRect) {
     return {
-      x: taskRect.x,
-      y: taskRect.y + taskRect.height - TASK_BAR_HEIGHT - MARGIN,
-      width: taskRect.width,
-      height: TASK_BAR_HEIGHT,
-    };
-  }
-
-  function getAvatarRect(taskRect) {
-    return {
-      x: taskRect.x,
+      x: taskRect.x + MARGIN,
       y: taskRect.y + MARGIN,
-      width: AVATAR_SIZE,
-      height: AVATAR_SIZE,
+      width: taskRect.width - MARGIN * 2,
+      height: taskRect.height - MARGIN * 2,
     };
   }
 
-  function getTextRect(taskRect) {
-    const width = taskRect.width - AVATAR_SIZE - MARGIN;
-    const height = AVATAR_SIZE;
-    const x = taskRect.x + AVATAR_SIZE + MARGIN;
-    const y = taskRect.y + MARGIN;
+  function getAvatarRect(taskRect, image) {
+    if (image) {
+      const aspectRatio = image.width / image.height;
+      const height = taskRect.height - MARGIN * 2;
+      const width = aspectRatio * height;
 
-    return { x, y, width, height };
+      return {
+        x: taskRect.x + MARGIN,
+        y: taskRect.y + MARGIN,
+        width,
+        height,
+      };
+    } else {
+      return {
+        x: taskRect.x + MARGIN,
+        y: taskRect.y + MARGIN,
+        width: AVATAR_SIZE,
+        height: AVATAR_SIZE,
+      };
+    }
+  }
+
+  function getTextRect(taskRect, image) {
+    const showAvatar = shouldShowAvatar(taskRect, image);
+    if (showAvatar) {
+      const avatarRect = getAvatarRect(taskRect, image);
+      return {
+        x: avatarRect.x + avatarRect.width + PADDING,
+        y: taskRect.y,
+        width: taskRect.width - avatarRect.width - PADDING * 2,
+        height: taskRect.height,
+      };
+    } else {
+      return {
+        x: taskRect.x + PADDING,
+        y: taskRect.y,
+        width: taskRect.width - PADDING * 2,
+        height: taskRect.height,
+      };
+    }
   }
 
   function drawOwnerAvatar(
     context,
     taskRect,
     ownerName,
+    isOngoing,
     color,
     avatar,
     isHovered
   ) {
-    const avatarRect = getAvatarRect(taskRect);
+    const showAvatar = shouldShowAvatar(taskRect, avatar?.image);
+    if (showAvatar) {
+      const avatarRect = getAvatarRect(taskRect, avatar?.image);
+      const hoverColor = isHovered ? highlight(color) : color;
 
-    const hoverColor = isHovered ? highlight(color) : color;
+      if (avatar?.image) {
+        drawAvatarCircle(
+          context,
+          avatar,
+          avatarRect.x,
+          avatarRect.y,
+          avatarRect.width,
+          avatarRect.height,
+          CORNER_RADIUS
+        );
+      } else {
+        const character = ownerName.charAt(0).toUpperCase();
 
-    if (avatar?.image) {
-      drawAvatarCircle(
-        context,
-        avatar,
-        avatarRect.x,
-        avatarRect.y,
-        AVATAR_SIZE
-      );
-    } else {
-      const character = ownerName.charAt(0).toUpperCase();
+        if (isOngoing) {
+          drawRoundedRect(
+            context,
+            avatarRect.x,
+            avatarRect.y,
+            avatarRect.width,
+            avatarRect.height,
+            {
+              topLeft: CORNER_RADIUS,
+              bottomLeft: CORNER_RADIUS,
+              topRight: 0,
+              bottomRight: 0,
+            }
+          );
+          context.fillStyle = color;
+          context.fill();
+        }
 
-      drawRoundedRect(
-        context,
-        avatarRect.x,
-        avatarRect.y,
-        avatarRect.width,
-        avatarRect.height,
-        AVATAR_SIZE / 2
-      );
-      context.fillStyle = hoverColor;
-      context.fill();
-
-      // Use color for contrast, rather than hoverColor,
-      // because it's jarring for the foreground to change color on hover.
-      context.font = `bold ${FONT_SIZE_AVATAR}px sans-serif`;
-      context.fillStyle =
-        getContrastRatio(color, WHITE) > getContrastRatio(color, BLACK)
-          ? WHITE
-          : BLACK;
-      drawTextToCenterWithin(
-        context,
-        character,
-        avatarRect.x,
-        avatarRect.y,
-        avatarRect.width,
-        avatarRect.height
-      );
+        // Use color for contrast, rather than hoverColor,
+        // because it's jarring for the foreground to change color on hover.
+        context.font = `bold ${FONT_SIZE_AVATAR}px sans-serif`;
+        context.fillStyle =
+          getContrastRatio(color, WHITE) > getContrastRatio(color, BLACK)
+            ? WHITE
+            : BLACK;
+        drawTextToCenterWithin(
+          context,
+          character,
+          avatarRect.x,
+          avatarRect.y,
+          avatarRect.width,
+          avatarRect.height
+        );
+      }
     }
   }
 
-  function drawTaskText(context, task, taskRect, metadata, isHovered) {
-    const textRect = getTextRect(taskRect);
+  function drawTaskText(
+    context,
+    task,
+    taskRect,
+    color,
+    avatar,
+    metadata,
+    isHovered
+  ) {
+    const textRect = getTextRect(taskRect, avatar?.image);
+
+    const height = (textRect.height - PADDING * 2 - PADDING) / 2;
+    const verticalCenter = textRect.y + textRect.height / 2;
+
+    const topTextRect = {
+      ...textRect,
+      y: verticalCenter - height - PADDING / 2,
+      height,
+    };
+    const bottomTextRect = {
+      ...textRect,
+      y: verticalCenter + PADDING / 2,
+      height,
+    };
+
+    let fillStyle =
+      getContrastRatio(color, WHITE) > getContrastRatio(color, BLACK)
+        ? WHITE
+        : BLACK;
 
     context.font = `${FONT_SIZE_NORMAL}px sans-serif`;
-    context.fillStyle = isHovered ? BLACK : DARK_GRAY;
+    context.fillStyle = fillStyle;
 
-    const clippedTextWidth = drawTextToFitWidth(
+    const [_, isTopClipped] = drawTextToFit(context, task.name, topTextRect, {
+      align: "top",
+    });
+
+    fillStyle =
+      getContrastRatio(color, WHITE) > getContrastRatio(color, BLACK)
+        ? "rgba(255,255,255,.8)"
+        : "rgba(0,0,0,.8)";
+
+    context.font = `small-caps ${FONT_SIZE_SMALL}px sans-serif`;
+    context.fillStyle = fillStyle;
+
+    const { start, stop } = metadata.taskToTemporalMap.get(task);
+
+    const [__, isBottomClipped] = drawTextToFit(
       context,
-      task.name,
-      textRect.x,
-      textRect.y,
-      textRect.width,
-      textRect.height
+      getDurationLabel(start, stop, metadata.unit),
+      bottomTextRect,
+      {
+        align: "top",
+      }
     );
 
     metadata.taskDOMMetadata.set(task, {
-      isClipped: clippedTextWidth !== null,
+      isClipped: isTopClipped || isBottomClipped,
       rect: taskRect,
     });
   }
@@ -208,8 +289,9 @@ export default function createDrawingUtils({
 
     if (task.isOngoing) {
       const pattern = drawDiagonalStripePattern(
-        WHITE,
-        hexToRgba(hoverColor, 0.5)
+        hoverColor,
+        highlight(hoverColor)
+        // hexToRgba(hoverColor, 0.2)
       );
       context.fillStyle = context.createPattern(pattern, "repeat");
     } else {
@@ -239,8 +321,6 @@ export default function createDrawingUtils({
     const color = task.color || owner?.color || getColorForString(ownerName);
     const avatar = ownerToImageMap.get(owner);
 
-    drawOwnerAvatar(context, taskRect, ownerName, color, avatar, isHovered);
-    drawTaskText(context, task, taskRect, metadata, isHovered);
     drawTaskBar(
       context,
       metadata,
@@ -250,6 +330,16 @@ export default function createDrawingUtils({
       chartWidth,
       isHovered
     );
+    drawOwnerAvatar(
+      context,
+      taskRect,
+      ownerName,
+      task.isOngoing,
+      color,
+      avatar,
+      isHovered
+    );
+    drawTaskText(context, task, taskRect, color, avatar, metadata, isHovered);
   }
 
   function drawUnitGrid(context, metadata, chartWidth, chartHeight) {
@@ -276,16 +366,16 @@ export default function createDrawingUtils({
       for (let index = 0; index < metadata.intervalRange.length - 1; index++) {
         const date = metadata.intervalRange[index];
 
-        const x = getDateLocation(date, metadata, chartWidth) + MARGIN;
-        const y = MARGIN;
-        const width = intervalWidth - MARGIN * 2;
+        const x = getDateLocation(date, metadata, chartWidth) + PADDING;
+        const y = 0;
+        const width = intervalWidth - PADDING * 2;
         const height = HEADER_HEIGHT;
 
         const text = getIntervalLabel(date, metadata.unit);
 
         context.font = `bold ${FONT_SIZE_HEADER}px sans-serif`;
         context.fillStyle = DARK_GRAY;
-        drawTextToFitWidth(context, text, x, y, width, height);
+        drawTextToFit(context, text, { x, y, width, height });
       }
     }
   }
@@ -323,12 +413,8 @@ export default function createDrawingUtils({
       return;
     }
 
-    const firstBarRect = getBarRect(
-      getTaskRect(firstTask, metadata, chartWidth)
-    );
-    const lowestBarRect = getBarRect(
-      getTaskRect(lowestTask, metadata, chartWidth)
-    );
+    const highestTaskRect = getTaskRect(firstTask, metadata, chartWidth);
+    const lowestTaskRect = getTaskRect(lowestTask, metadata, chartWidth);
     const parentBarRect = getBarRect(
       getTaskRect(parentTask, metadata, chartWidth)
     );
@@ -336,14 +422,14 @@ export default function createDrawingUtils({
     const x = Math.max(
       parentBarRect.x + MARGIN,
       Math.min(
-        firstBarRect.x - LINE_SEGMENT_MIN_LENGTH - MARGIN,
+        highestTaskRect.x - LINE_SEGMENT_MIN_LENGTH - MARGIN,
         // Ideal target alignment:
         parentBarRect.x + parentBarRect.width / 2
       )
     );
 
     const y0 = parentBarRect.y + parentBarRect.height + MARGIN;
-    const y1 = lowestBarRect.y + lowestBarRect.height / 2;
+    const y1 = lowestTaskRect.y + lowestTaskRect.height / 2;
 
     // Draw vertical line from parent task down.
     // This assumes that each sub-task is on its own row.
@@ -358,9 +444,7 @@ export default function createDrawingUtils({
     // Draw horizontal lines (with arrows) to connect each dependent task.
     for (let i = 0; i < dependentTasks.length; i++) {
       const dependantTask = dependentTasks[i];
-      const dependantBarRect = getBarRect(
-        getTaskRect(dependantTask, metadata, chartWidth)
-      );
+      const dependantBarRect = getTaskRect(dependantTask, metadata, chartWidth);
 
       const x0 = x;
       const x1 = dependantBarRect.x - MARGIN;

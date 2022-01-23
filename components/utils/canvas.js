@@ -1,28 +1,33 @@
+const STRIPE_PATTER_SIZE = 40;
+const STRIPE_SIZE = 2;
 const VERTICAL_TEXT_OFFSET = 1;
 
 export function drawDiagonalStripePattern(backgroundColor, color) {
   const canvas = document.createElement("canvas");
-  canvas.width = 300;
-  canvas.height = 300;
+  canvas.width = STRIPE_PATTER_SIZE;
+  canvas.height = STRIPE_PATTER_SIZE;
 
   const context = canvas.getContext("2d");
 
-  var numberOfStripes = 100;
-  for (var i = 0; i < numberOfStripes * 2; i++) {
-    var thickness = 300 / numberOfStripes;
+  const numberOfStripes = STRIPE_PATTER_SIZE / 2;
+  for (let i = 0; i < numberOfStripes * 2; i++) {
+    const thickness = STRIPE_PATTER_SIZE / numberOfStripes;
     context.beginPath();
     context.strokeStyle = i % 2 ? backgroundColor : color;
     context.lineWidth = thickness;
     context.lineCap = "round";
-    context.moveTo(i * thickness + thickness / 2 - 300, 0);
-    context.lineTo(0 + i * thickness + thickness / 2, 300);
+    context.moveTo(i * thickness + thickness / 2 - STRIPE_PATTER_SIZE, 0);
+    context.lineTo(0 + i * thickness + thickness / 2, STRIPE_PATTER_SIZE);
     context.stroke();
   }
 
   return canvas;
 }
 
-export function drawTextToFitWidth(context, text, x, y, width, height) {
+export function drawTextToFit(context, text, rect, options = {}) {
+  const { x, y, width, height } = rect;
+  const { align = "middle", renderIfClipped = true } = options;
+
   let resizedText = false;
 
   let textToRender = text;
@@ -36,15 +41,30 @@ export function drawTextToFitWidth(context, text, x, y, width, height) {
     }
   }
 
-  context.textBaseline = "middle";
-  context.fillText(
-    textToRender,
-    x,
-    y + height / 2 + VERTICAL_TEXT_OFFSET,
-    width
-  );
+  if (!resizedText || renderIfClipped) {
+    let textBaseline;
+    switch (align) {
+      case "top":
+        textBaseline = "top";
+        break;
+      case "bottom":
+        textBaseline = "bottom";
+        y = y + height;
+        height = 0;
+        break;
+      case "middle":
+        textBaseline = "middle";
+        y = y + height / 2;
+        height = 0;
+      default:
+        break;
+    }
 
-  return resizedText ? textWidth : null;
+    context.textBaseline = textBaseline;
+    context.fillText(textToRender, x, y, width);
+  }
+
+  return [textWidth, resizedText];
 }
 
 export function drawTextToCenterWithin(context, text, x, y, width, height) {
@@ -60,22 +80,44 @@ export function drawTextToCenterWithin(context, text, x, y, width, height) {
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Drawing_shapes
-export function drawRoundedRect(context, x, y, width, height, radius) {
+export function drawRoundedRect(context, x, y, width, height, radiusOrConfig) {
+  let topLeftRadius, topRightRadius, bottomRightRadius, bottomLeftRadius;
+  if (typeof radiusOrConfig === "number") {
+    topLeftRadius = radiusOrConfig;
+    topRightRadius = radiusOrConfig;
+    bottomLeftRadius = radiusOrConfig;
+    bottomRightRadius = radiusOrConfig;
+  } else {
+    topLeftRadius = radiusOrConfig.topLeft;
+    topRightRadius = radiusOrConfig.topRight;
+    bottomLeftRadius = radiusOrConfig.bottomLeft;
+    bottomRightRadius = radiusOrConfig.bottomRight;
+  }
+
   context.beginPath();
-  context.moveTo(x + radius, y);
-  context.arcTo(x + width, y, x + width, y + height, radius);
-  context.arcTo(x + width, y + height, x, y + height, radius);
-  context.arcTo(x, y + height, x, y, radius);
-  context.arcTo(x, y, x + width, y, radius);
+  context.moveTo(x + topLeftRadius, y);
+  context.arcTo(x + width, y, x + width, y + height, topRightRadius);
+  context.arcTo(x + width, y + height, x, y + height, bottomRightRadius);
+  context.arcTo(x, y + height, x, y, bottomLeftRadius);
+  context.arcTo(x, y, x + width, y, topLeftRadius);
   context.closePath();
 }
 
-export function drawAvatarCircle(context, avatar, x, y, size) {
+export function drawAvatarCircle(context, avatar, x, y, width, height, radius) {
   context.save();
   context.beginPath();
-  drawRoundedRect(context, x, y, size, size, size / 2);
+  drawRoundedRect(context, x, y, width, height, {
+    topLeft: radius,
+    bottomLeft: radius,
+    topRight: 0,
+    bottomRight: 0,
+  });
   context.closePath();
   context.clip();
+
+  const aspectRatio = avatar.width / avatar.height;
+  const imageHeight = height;
+  const imageWidth = aspectRatio * height;
 
   context.drawImage(
     avatar.image,
@@ -89,8 +131,8 @@ export function drawAvatarCircle(context, avatar, x, y, size) {
     // Canvas coordinates and scaled image size
     x,
     y,
-    size,
-    size
+    imageWidth,
+    imageHeight
   );
 
   context.restore();

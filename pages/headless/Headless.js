@@ -57,6 +57,8 @@ export default function Headless() {
       <div className={styles.InnerWrapper}>
         <Legend
           avatarSize={SCALED_CONFIG.AVATAR_SIZE}
+          cornerRadius={SCALED_CONFIG.CORNER_RADIUS}
+          padding={SCALED_CONFIG.PADDING}
           tasks={tasks}
           team={team}
         />

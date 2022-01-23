@@ -8,6 +8,7 @@ import { parseCode, stringifyObject } from "../utils/parsing";
 import { fromString, subtract } from "../utils/time";
 import { team as initialOwners, tasks as initialTasks } from "./data";
 import useURLData from "../hooks/useURLData";
+import * as defaultConfig from "../Planner/defaultConfig";
 import styles from "./App.module.css";
 
 const defaultData = { tasks: initialTasks, team: initialOwners };
@@ -53,12 +54,19 @@ export default function App() {
 
   return (
     <div className={styles.App}>
-      <Header team={team} tasks={tasks} />
+      <Header
+        avatarSize={defaultConfig.AVATAR_SIZE}
+        cornerRadius={defaultConfig.CORNER_RADIUS}
+        padding={defaultConfig.PADDING}
+        team={team}
+        tasks={tasks}
+      />
 
       <div className={styles.ChartContainer}>
         <AutoSizer disableHeight>
           {({ width }) => (
             <Planner
+              config={defaultConfig}
               resetError={resetError}
               tasks={tasks}
               team={team}

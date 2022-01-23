@@ -52,6 +52,46 @@ export function getEndOfDay(temporal) {
   return fromString(dateString, "23:59:59");
 }
 
+export function getDurationLabel(startDate, stopDate, unit) {
+  const milliseconds = stopDate.epochMilliseconds - startDate.epochMilliseconds;
+
+  let displayValue;
+  let displayUnit;
+
+  switch (unit) {
+    case INTERVAL_UNIT_HOUR:
+      displayValue = milliseconds / MILLISECONDS_IN_HOUR;
+      displayUnit = "hour";
+      break;
+    case INTERVAL_UNIT_DAY:
+      displayValue = milliseconds / MILLISECONDS_IN_DAY;
+      displayUnit = "day";
+      break;
+    case INTERVAL_UNIT_WEEK:
+      displayValue = milliseconds / MILLISECONDS_IN_WEEK;
+      displayUnit = "week";
+      break;
+    case INTERVAL_UNIT_MONTH:
+      displayValue = milliseconds / MILLISECONDS_IN_MONTH;
+      displayUnit = "month";
+      break;
+    case INTERVAL_UNIT_YEAR:
+      displayValue = milliseconds / MILLISECONDS_IN_YEAR;
+      displayUnit = "year";
+      break;
+    default:
+      throw Error(`Invalid unit "${unit}"`);
+  }
+
+  if (!Number.isInteger(displayValue)) {
+    displayValue = Number(displayValue.toFixed(1));
+  }
+
+  return displayValue === 1
+    ? `1 ${displayUnit}`
+    : `${displayValue} ${displayUnit}s`;
+}
+
 export function getIntervalLabel(date, unit) {
   switch (unit) {
     case INTERVAL_UNIT_HOUR:

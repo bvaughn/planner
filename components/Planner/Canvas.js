@@ -19,11 +19,9 @@ export default function Canvas({
     CONTEXT_MENU_VERTICAL_OFFSET,
     HEADER_HEIGHT,
     MARGIN,
-    TASK_BAR_HEIGHT,
     TOOLTIP_OFFSET,
   } = config;
-  const TASK_ROW_HEIGHT =
-    MARGIN + AVATAR_SIZE + MARGIN + TASK_BAR_HEIGHT + MARGIN;
+  const TASK_ROW_HEIGHT = MARGIN + AVATAR_SIZE + MARGIN;
 
   const {
     drawDependencyConnections,

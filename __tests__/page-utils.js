@@ -30,6 +30,7 @@ async function loadData(page, data) {
 
 async function loadOgImage(page, data) {
   const url = getUrlForOgImage(data);
+console.log('url:\n'+url+'\n');
 
   await page.goto(url, {
     waitUntil: "domcontentloaded",
