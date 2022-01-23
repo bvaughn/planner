@@ -9,7 +9,13 @@ import {
 } from "../utils/color";
 import styles from "./Legend.module.css";
 
-export default function Legend({ avatarSize = 24, tasks, team }) {
+export default function Legend({
+  avatarSize,
+  cornerRadius,
+  padding,
+  tasks,
+  team,
+}) {
   const entries = useMemo(() => {
     const map = new Map();
 
@@ -57,14 +63,18 @@ export default function Legend({ avatarSize = 24, tasks, team }) {
             : BLACK;
 
         return (
-          <li key={name} className={styles.ListItem}>
+          <li
+            key={name}
+            className={styles.ListItem}
+            style={{ padding: `${padding}px` }}
+          >
             <span
               className={styles.ColorChip}
               style={{
                 backgroundColor,
-                width: `${avatarSize}px`,
+                width: avatar ? '' : `${avatarSize}px`,
                 height: `${avatarSize}px`,
-                borderRadius: `${avatarSize}px`,
+                borderRadius: `${cornerRadius}px`,
               }}
             >
               {avatar && (
