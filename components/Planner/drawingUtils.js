@@ -286,7 +286,7 @@ export default function createDrawingUtils({
   ) {
     const barRect = getBarRect(taskRect);
 
-    const hoverColor = isHovered ? highlight(color) : color;
+    const fillColor = isHovered ? highlight(color) : color;
 
     drawRoundedRect(
       context,
@@ -297,15 +297,11 @@ export default function createDrawingUtils({
       CORNER_RADIUS
     );
 
-    if (task.isOngoing) {
-      const pattern = drawDiagonalStripePattern(
-        hoverColor,
-        highlight(hoverColor)
-        // hexToRgba(hoverColor, 0.2)
-      );
+    if (!isHovered && task.isOngoing) {
+      const pattern = drawDiagonalStripePattern(color, highlight(color));
       context.fillStyle = context.createPattern(pattern, "repeat");
     } else {
-      context.fillStyle = hoverColor;
+      context.fillStyle = fillColor;
     }
 
     context.fill();

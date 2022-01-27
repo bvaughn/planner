@@ -88,6 +88,8 @@ export default function MouseControls({
     const handleMouseLeave = (event) => {
       dispatch({ type: "hide" });
 
+      setActiveTask(null);
+
       canvas.style.cursor = "default";
     };
 
