@@ -25,7 +25,8 @@ export function drawDiagonalStripePattern(backgroundColor, color) {
 }
 
 export function drawTextToFit(context, text, rect, options = {}) {
-  const { x, y, width, height } = rect;
+  const { x, width } = rect;
+  let { y, height } = rect;
   const { align = "middle", renderIfClipped = true } = options;
 
   let resizedText = false;
