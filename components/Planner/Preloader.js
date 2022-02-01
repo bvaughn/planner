@@ -157,12 +157,31 @@ export default function Preloader({ children, tasks, team }) {
     let unit = "day";
     let intervalRange = [];
     if (sortedTasks.length > 0) {
-      const firstDate = taskToTemporalMap.get(sortedTasks[0]).start;
-      const minDate = getStartOfDay(firstDate);
-      const lastDate = taskToTemporalMap.get(
-        sortedTasks[sortedTasks.length - 1]
-      ).stop;
-      const maxDate = getEndOfDay(lastDate);
+      const firstAndLastTasks = sortedTasks.reduce(
+        (firstAndLastTasks, task) => {
+          if (firstAndLastTasks.length === 0) {
+            firstAndLastTasks.push(task);
+            firstAndLastTasks.push(task);
+          } else {
+            if (task.start < firstAndLastTasks[0].start) {
+              firstAndLastTasks[0] = task;
+            }
+            if (task.stop > firstAndLastTasks[1].stop) {
+              firstAndLastTasks[1] = task;
+            }
+          }
+
+          return firstAndLastTasks;
+        },
+        []
+      );
+
+      const minDate = getStartOfDay(
+        taskToTemporalMap.get(firstAndLastTasks[0]).start
+      );
+      const maxDate = getEndOfDay(
+        taskToTemporalMap.get(firstAndLastTasks[1]).stop
+      );
 
       unit = getIntervalUnit(minDate, maxDate);
       intervalRange = getIntervalRange(minDate, maxDate);
