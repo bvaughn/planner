@@ -147,62 +147,6 @@ export default function EditTaskModal({
           />
         </div>
 
-        <div className={styles.LabelColumn}>Owner(s)</div>
-        <div className={styles.InputColumn}>
-          {ownersArray.map((owner, index) => (
-            <div key={index} className={styles.OwnerRow}>
-              {owner}
-              <button
-                data-testname={`Button-RemoveOwner-${owner}`}
-                className={styles.AddOwnerButton}
-                onClick={() => removeOwner(owner)}
-              >
-                <RemoveIcon />
-              </button>
-            </div>
-          ))}
-
-          <div className={styles.OwnerRow}>
-            <select
-              data-testname="Select-PendingOwner"
-              className={styles.Select}
-              disabled={
-                pendingOwnerName || potentialNewOwnersArray.length === 0
-              }
-              onChange={handlePendingOwnerSelectChange}
-              onKeyPress={handleKeyPress}
-              value={pendingOwnerID || ""}
-            >
-              <option value="" onChange={handleChange}></option>
-              {potentialNewOwnersArray.map(([key, owner]) => (
-                <option key={key} value={key}>
-                  {owner.name || key}
-                </option>
-              ))}
-            </select>
-            <span className={styles.BigSpacer} />
-            or
-            <span className={styles.BigSpacer} />
-            <input
-              data-testname="Input-PendingOwner"
-              className={styles.Input}
-              type="text"
-              placeholder="Owner name"
-              onChange={handlePendingOwnerInputChange}
-              onKeyPress={handleKeyPress}
-              value={pendingOwnerName || ""}
-            />
-            <button
-              data-testname="Button-AddPendingOwner"
-              className={styles.AddOwnerButton}
-              disabled={!pendingOwnerID && !pendingOwnerName}
-              onClick={addPendingOwner}
-            >
-              <AddIcon />
-            </button>
-          </div>
-        </div>
-
         <div className={styles.LabelColumn}>Dates</div>
         <div className={styles.InputLeftColumn}>
           <input
@@ -234,6 +178,64 @@ export default function EditTaskModal({
             onChange={handleChange}
             checked={clonedTask.isOngoing === true}
           />
+        </div>
+
+        <div className={styles.LabelColumn}>Owner(s)</div>
+        <div className={styles.InputColumn}>
+          <div className={styles.OwnersRows}>
+            {ownersArray.map((owner, index) => (
+              <div key={index} className={styles.OwnerRow}>
+                {owner}
+                <button
+                  data-testname={`Button-RemoveOwner-${owner}`}
+                  className={styles.RemoveOwnerButton}
+                  onClick={() => removeOwner(owner)}
+                >
+                  <RemoveIcon />
+                </button>
+              </div>
+            ))}
+
+            <div className={styles.OwnerRow}>
+              <select
+                data-testname="Select-PendingOwner"
+                className={styles.Select}
+                disabled={
+                  pendingOwnerName || potentialNewOwnersArray.length === 0
+                }
+                onChange={handlePendingOwnerSelectChange}
+                onKeyPress={handleKeyPress}
+                value={pendingOwnerID || ""}
+              >
+                <option value="" onChange={handleChange}></option>
+                {potentialNewOwnersArray.map(([key, owner]) => (
+                  <option key={key} value={key}>
+                    {owner.name || key}
+                  </option>
+                ))}
+              </select>
+              <span className={styles.BigSpacer} />
+              or
+              <span className={styles.BigSpacer} />
+              <input
+                data-testname="Input-PendingOwner"
+                className={styles.Input}
+                type="text"
+                placeholder="Owner name"
+                onChange={handlePendingOwnerInputChange}
+                onKeyPress={handleKeyPress}
+                value={pendingOwnerName || ""}
+              />
+              <button
+                data-testname="Button-AddPendingOwner"
+                className={styles.AddOwnerButton}
+                disabled={!pendingOwnerID && !pendingOwnerName}
+                onClick={addPendingOwner}
+              >
+                <AddIcon />
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className={styles.LabelColumn}>Dependent on</div>

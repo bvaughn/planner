@@ -35,6 +35,10 @@
   color: white;
 }
 
+.DividerRow {
+  grid-column: 1 / span 3;
+}
+
 .LabelColumn {
   grid-column: 1;
   align-self: center;
@@ -121,26 +125,45 @@
   width: 100%;
 }
 
+.OwnersRows {
+  width: 100%;
+  border: 1px solid #eee;
+  border-radius: 0.25rem;
+}
+
 .OwnerRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  padding: 0.25rem;
+  border-bottom: 1px solid #eee;
+}
+.OwnerRow:last-of-type {
+  border-bottom: none;
 }
 
-.AddOwnerButton {
+.AddOwnerButton,
+.RemoveOwnerButton {
   display: flex;
   align-items: center;
   border: none;
   cursor: pointer;
   background-color: transparent;
-  color: #363852;
   padding: 0;
   margin-left: 0.25rem;
 }
-.AddOwnerButton:disabled {
+.AddOwnerButton:disabled,
+.RemoveOwnerButton:disabled {
   cursor: default;
+  color: #aaa;
   opacity: 0.5;
+}
+.AddOwnerButton {
+  color: #363852;
+}
+.RemoveOwnerButton {
+  color: #a22628;
 }
 
 .AddIcon,
