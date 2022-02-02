@@ -12,7 +12,7 @@ const OG_IMAGE_MARGIN = 20;
 // Scale UI to 2x for og:image rendering
 const SCALED_CONFIG = {};
 Object.entries(defaultConfig).forEach(([key, value]) => {
-  if (typeof value === "number") {
+  if (typeof value === "number" && Number.isInteger(value)) {
     SCALED_CONFIG[key] = value * 2;
   } else {
     SCALED_CONFIG[key] = value;
