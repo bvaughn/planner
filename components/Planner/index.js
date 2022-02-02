@@ -4,7 +4,14 @@ import ErrorBoundary from "./ErrorBoundary";
 import Preloader from "./Preloader";
 import * as defaultConfig from "./defaultConfig";
 
-export default function Planner({ config, resetError, tasks, team, width }) {
+export default function Planner({
+  config,
+  resetError,
+  tasks,
+  team,
+  width,
+  ...rest
+}) {
   const memoizedConfig = useMemo(
     () => ({
       ...defaultConfig,
@@ -23,6 +30,7 @@ export default function Planner({ config, resetError, tasks, team, width }) {
             ownerToImageMap={ownerToImageMap}
             tasks={tasks}
             width={width}
+            {...rest}
           />
         )}
       </Preloader>
