@@ -4,6 +4,9 @@ export const LINE_WIDTH = 1;
 export const CORNER_RADIUS = 4;
 export const AVATAR_SIZE = 30;
 
+export const OWNERS_BADGE_SIZE = 22;
+export const OWNERS_BADGE_ALPHA = 0.75;
+
 export const HEADER_HEIGHT = 20;
 
 export const LINE_SEGMENT_MIN_LENGTH = 20;

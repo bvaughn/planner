@@ -4,6 +4,7 @@ import {
   drawRoundedRect,
   drawTextToCenterWithin,
   drawTextToFit,
+  drawTopCornerBadge,
 } from "../utils/canvas";
 import {
   BLACK,
@@ -16,7 +17,7 @@ import {
   hexToRgba,
   highlight,
 } from "../utils/color";
-import { getOwnerName } from "../utils/task";
+import { getOwnerNames, getPrimaryOwnerName } from "../utils/task";
 import { getDurationLabel, getIntervalLabel } from "../utils/time";
 
 export default function createDrawingUtils({
@@ -31,6 +32,8 @@ export default function createDrawingUtils({
   LINE_SEGMENT_MIN_LENGTH,
   LINE_WIDTH,
   MARGIN,
+  OWNERS_BADGE_SIZE,
+  OWNERS_BADGE_ALPHA,
   PADDING,
   TOOLTIP_OFFSET,
 }) {
@@ -142,8 +145,8 @@ export default function createDrawingUtils({
   function drawOwnerAvatar(
     context,
     taskRect,
-    ownerName,
-    isOngoing,
+    task,
+    team,
     color,
     avatar,
     isHovered
@@ -164,6 +167,7 @@ export default function createDrawingUtils({
           CORNER_RADIUS
         );
       } else {
+        const ownerName = getPrimaryOwnerName(task, team);
         const character = ownerName.charAt(0).toUpperCase();
 
         drawRoundedRect(
@@ -210,12 +214,51 @@ export default function createDrawingUtils({
           avatarRect.height
         );
       }
+
+      if (Array.isArray(task.owner) && task.owner.length > 1) {
+        const badgeRect = {
+          x: avatarRect.x + avatarRect.width - OWNERS_BADGE_SIZE,
+          y: avatarRect.y,
+          width: OWNERS_BADGE_SIZE,
+          height: OWNERS_BADGE_SIZE,
+        };
+
+        // Contrast against the base color, rather than the hoverColor,
+        // because hoverColor changes on mouse-over and it's jarring for the foreground to change color on hover.
+        const contrastColor =
+          getContrastRatio(color, WHITE) > getContrastRatio(color, BLACK)
+            ? WHITE
+            : BLACK;
+
+        drawTopCornerBadge(
+          context,
+          badgeRect.x,
+          badgeRect.y,
+          badgeRect.width,
+          badgeRect.height,
+          avatar?.image ? CORNER_RADIUS : 0
+        );
+        context.fillStyle = hexToRgba(contrastColor, OWNERS_BADGE_ALPHA);
+        context.fill();
+
+        context.font = `bold ${FONT_SIZE_SMALL}px sans-serif`;
+        context.fillStyle = color;
+        drawTextToCenterWithin(
+          context,
+          `+${task.owner.length - 1}`,
+          badgeRect.x + badgeRect.width / 2,
+          badgeRect.y,
+          badgeRect.width / 2,
+          badgeRect.height / 2
+        );
+      }
     }
   }
 
   function drawTaskText(
     context,
     task,
+    team,
     taskRect,
     color,
     avatar,
@@ -255,14 +298,19 @@ export default function createDrawingUtils({
         ? "rgba(255,255,255,.8)"
         : "rgba(0,0,0,.8)";
 
-    context.font = `small-caps ${FONT_SIZE_SMALL}px sans-serif`;
+    context.font = `${FONT_SIZE_SMALL}px sans-serif`;
     context.fillStyle = fillStyle;
 
     const { start, stop } = metadata.taskToTemporalMap.get(task);
 
+    const ownerNames = getOwnerNames(task, team);
+    const durationLabel = getDurationLabel(start, stop, metadata.unit);
+
     const [__, isBottomClipped] = drawTextToFit(
       context,
-      getDurationLabel(start, stop, metadata.unit),
+      // Try to render names and duration.
+      // If that won't fit, all back to rendering just the names.
+      [`${ownerNames} - (${durationLabel})`, ownerNames],
       bottomTextRect,
       {
         align: "top",
@@ -321,8 +369,10 @@ export default function createDrawingUtils({
 
     const isHovered = task === hoveredTask;
 
-    const ownerName = getOwnerName(task, team);
-    const owner = team[task.owner];
+    const ownerName = getPrimaryOwnerName(task, team);
+    const owner = Array.isArray(task.owner)
+      ? team[task.owner[0]]
+      : team[task.owner];
 
     const color = task.color || owner?.color || getColorForString(ownerName);
     const avatar = ownerToImageMap.get(owner);
@@ -336,16 +386,17 @@ export default function createDrawingUtils({
       chartWidth,
       isHovered
     );
-    drawOwnerAvatar(
+    drawOwnerAvatar(context, taskRect, task, team, color, avatar, isHovered);
+    drawTaskText(
       context,
+      task,
+      team,
       taskRect,
-      ownerName,
-      task.isOngoing,
       color,
       avatar,
+      metadata,
       isHovered
     );
-    drawTaskText(context, task, taskRect, color, avatar, metadata, isHovered);
   }
 
   function drawUnitGrid(context, metadata, chartWidth, chartHeight) {

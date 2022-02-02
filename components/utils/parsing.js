@@ -6,5 +6,5 @@ export function parseCode(maybeCodeString) {
 export function stringifyObject(objectOrArray) {
   const string = JSON.stringify(objectOrArray, null, 2);
   // eslint-disable-next-line no-regex-spaces
-  return string.replace(/  "([^"]+)"/g, "  $1");
+  return string.replace(/  "([^"]+)":/g, "  $1:");
 }

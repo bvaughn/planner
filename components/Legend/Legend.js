@@ -32,13 +32,25 @@ export default function Legend({
 
     for (let taskIndex = 0; taskIndex < tasks.length; taskIndex++) {
       const task = tasks[taskIndex];
-      const ownerKey = task.owner || "Team";
-      if (!map.has(ownerKey)) {
-        map.set(ownerKey.toLowerCase(), {
-          name: ownerKey,
-          color: getColorForString(ownerKey),
-          avatar: null,
+      if (Array.isArray(task.owner)) {
+        task.owner.forEach((ownerKey) => {
+          if (!map.has(ownerKey.toLowerCase())) {
+            map.set(ownerKey.toLowerCase(), {
+              name: ownerKey,
+              color: getColorForString(ownerKey),
+              avatar: null,
+            });
+          }
         });
+      } else {
+        const ownerKey = task.owner || "Team";
+        if (!map.has(ownerKey.toLowerCase())) {
+          map.set(ownerKey.toLowerCase(), {
+            name: ownerKey,
+            color: getColorForString(ownerKey),
+            avatar: null,
+          });
+        }
       }
     }
 

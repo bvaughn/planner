@@ -24,48 +24,58 @@ export function drawDiagonalStripePattern(backgroundColor, color) {
   return canvas;
 }
 
-export function drawTextToFit(context, text, rect, options = {}) {
+export function drawTextToFit(context, textOrTexts, rect, options = {}) {
   const { x, width } = rect;
   let { y, height } = rect;
   const { align = "middle", renderIfClipped = true } = options;
 
-  let resizedText = false;
+  const textArray = Array.isArray(textOrTexts) ? textOrTexts : [textOrTexts];
+  for (let i = 0; i < textArray.length; i++) {
+    const text = textArray[i];
 
-  let textToRender = text;
-  let textWidth = context.measureText(textToRender).width;
-  if (textWidth > width) {
-    resizedText = true;
+    let resizedText = false;
 
-    while (textWidth >= width && textToRender.length > 1) {
-      textToRender = textToRender.substring(0, textToRender.length - 2) + "…";
-      textWidth = context.measureText(textToRender).width;
-    }
-  }
+    let textToRender = text;
+    let textWidth = context.measureText(textToRender).width;
+    if (textWidth > width) {
+      resizedText = true;
 
-  if (!resizedText || renderIfClipped) {
-    let textBaseline;
-    switch (align) {
-      case "top":
-        textBaseline = "top";
-        break;
-      case "bottom":
-        textBaseline = "bottom";
-        y = y + height;
-        height = 0;
-        break;
-      case "middle":
-        textBaseline = "middle";
-        y = y + height / 2;
-        height = 0;
-      default:
-        break;
+      // If a shorter alternate text has been provided, move onto it.
+      if (i < textArray.length - 1) {
+        continue;
+      }
+
+      while (textWidth >= width && textToRender.length > 1) {
+        textToRender = textToRender.substring(0, textToRender.length - 2) + "…";
+        textWidth = context.measureText(textToRender).width;
+      }
     }
 
-    context.textBaseline = textBaseline;
-    context.fillText(textToRender, x, y, width);
-  }
+    if (!resizedText || renderIfClipped) {
+      let textBaseline;
+      switch (align) {
+        case "top":
+          textBaseline = "top";
+          break;
+        case "bottom":
+          textBaseline = "bottom";
+          y = y + height;
+          height = 0;
+          break;
+        case "middle":
+          textBaseline = "middle";
+          y = y + height / 2;
+          height = 0;
+        default:
+          break;
+      }
 
-  return [textWidth, resizedText];
+      context.textBaseline = textBaseline;
+      context.fillText(textToRender, x, y, width);
+    }
+
+    return [textWidth, resizedText];
+  }
 }
 
 export function drawTextToCenterWithin(context, text, x, y, width, height) {
@@ -78,6 +88,15 @@ export function drawTextToCenterWithin(context, text, x, y, width, height) {
     y + height / 2 + VERTICAL_TEXT_OFFSET,
     textWidth
   );
+}
+
+export function drawTopCornerBadge(context, x, y, width, height, radius) {
+  context.beginPath();
+  context.moveTo(x, y);
+  context.arcTo(x + width, y, x + width, y + height, radius);
+  context.lineTo(x + width, y + height);
+  context.lineTo(x, y);
+  context.closePath();
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Drawing_shapes

@@ -55,7 +55,6 @@
   align-self: center;
   justify-self: stretch;
   white-space: nowrap;
-  padding-right: 0.25rem;
 }
 .InputRightColumn {
   grid-column: 3;
@@ -72,27 +71,42 @@
   padding-right: 0.25rem;
 }
 
-.CancelButton {
-  background-color: #888;
-  color: white;
+.CancelButton,
+.SaveButton {
+  display: inline-flex;
+  align-items: center;
   border: none;
   border-radius: 0.25rem;
   padding: 0.25rem 0.5rem;
   cursor: pointer;
 }
-
+.CancelButton {
+  background-color: #ddd;
+  color: #000;
+}
 .SaveButton {
   background-color: #363852;
   color: white;
-  border: none;
-  border-radius: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  cursor: pointer;
 }
 
+.BigSpacer,
 .Spacer {
   display: inline-block;
+}
+.BigSpacer {
   width: 0.5rem;
+}
+.Spacer {
+  width: 0.25rem;
+}
+
+.DateInput,
+.Input,
+.Select {
+  background-color: #eee;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+  padding: 0.125rem;
 }
 
 .DateInput {
@@ -105,4 +119,38 @@
 
 .Input {
   width: 100%;
+}
+
+.OwnerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.AddOwnerButton {
+  display: flex;
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  background-color: transparent;
+  color: #363852;
+  padding: 0;
+  margin-left: 0.25rem;
+}
+.AddOwnerButton:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.AddIcon,
+.CancelIcon,
+.RemoveIcon,
+.SaveIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.CancelIcon,
+.SaveIcon {
+  margin-right: 0.25rem;
 }
