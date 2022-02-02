@@ -6,8 +6,10 @@ import { openInNewTab } from "../utils/url";
 // Processes data; arguably should be moved into Preloader component.
 export default function Canvas({
   config,
+  editTask,
   metadata,
   ownerToImageMap,
+  removeTask,
   tasks,
   team,
   width,
@@ -114,8 +116,10 @@ export default function Canvas({
         canvasRef={canvasRef}
         contextMenuHorizontalOffset={CONTEXT_MENU_HORIZONTAL_OFFSET}
         contextMenuVerticalOffset={CONTEXT_MENU_VERTICAL_OFFSET}
+        editTask={editTask}
         findTaskAtPoint={findTaskAtPoint}
         metadata={metadata}
+        removeTask={removeTask}
         setActiveTask={setHoveredTask}
         tooltipOffset={TOOLTIP_OFFSET}
       />

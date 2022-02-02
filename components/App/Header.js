@@ -32,6 +32,7 @@ export default function Header({
   avatarSize,
   cornerRadius,
   padding,
+  showNewTaskModal,
   team,
   tasks,
 }) {
@@ -64,6 +65,13 @@ export default function Header({
         >
           <RedoIcon className={styles.Icon} width={20} height={20} />
         </button>
+        <button
+          className={styles.ButtonOrLink}
+          onClick={showNewTaskModal}
+          title="Add task"
+        >
+          <AddIcon className={styles.Icon} width={20} height={20} />
+        </button>
       </div>
       <Legend
         avatarSize={avatarSize}
@@ -86,6 +94,16 @@ export default function Header({
     </div>
   );
 }
+
+// https://materialdesignicons.com/
+const AddIcon = () => (
+  <svg className={styles.Icon} viewBox="0 0 24 24">
+    <path
+      fill="currentColor"
+      d="M17,13H13V17H11V13H7V11H11V7H13V11H17M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
+    />
+  </svg>
+);
 
 // https://github.com/gilbarbara/logos/blob/master/logos/github-icon.svg
 const GitHubIcon = () => (

@@ -52,8 +52,10 @@ export default function MouseControls({
   canvasRef,
   contextMenuHorizontalOffset,
   contextMenuVerticalOffset,
+  editTask,
   findTaskAtPoint,
   metadata,
+  removeTask,
   setActiveTask,
   tooltipOffset,
 }) {
@@ -249,6 +251,18 @@ export default function MouseControls({
         openInNewTab(task.url);
       };
 
+      const editTaskWrapper = () => {
+        if (typeof editTask === "function") {
+          editTask(task);
+        }
+      };
+
+      const removeTaskWrapper = () => {
+        if (typeof removeTask === "function") {
+          removeTask(task);
+        }
+      };
+
       return (
         <ul
           data-testname="ContextMenu"
@@ -269,6 +283,24 @@ export default function MouseControls({
               onClick={openTaskURL}
             >
               Open task URL
+            </li>
+          )}
+          {typeof editTask === "function" && (
+            <li
+              data-testname="ContextMenu-EditTask"
+              className={styles.ContextMenuItem}
+              onClick={editTaskWrapper}
+            >
+              Edit task
+            </li>
+          )}
+          {typeof removeTask === "function" && (
+            <li
+              data-testname="ContextMenu-RemoveTask"
+              className={styles.ContextMenuItem}
+              onClick={removeTaskWrapper}
+            >
+              Remove task
             </li>
           )}
         </ul>

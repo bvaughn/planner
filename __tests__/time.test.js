@@ -176,4 +176,41 @@ test.describe("Time", () => {
       "canvas-screenshot-years.png"
     );
   });
+
+  test("should properly sort tasks when there are dependencies", async ({
+    page,
+  }) => {
+    await loadData(page, {
+      tasks: [
+        {
+          id: 1,
+          start: "2022-01-01",
+          stop: "2022-03-15",
+          name: "Task A",
+        },
+        {
+          start: "2022-01-15",
+          stop: "2022-05-30",
+          name: "Task B",
+          id: 2,
+        },
+        {
+          start: "2022-02-01",
+          stop: "2022-05-01",
+          name: "Task C",
+          dependency: 1,
+        },
+        {
+          start: "2022-02-08",
+          stop: "2022-02-24",
+          name: "Task D",
+        },
+      ],
+      team: {},
+    });
+
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "dependency-sort-bugfix.png"
+    );
+  });
 });
