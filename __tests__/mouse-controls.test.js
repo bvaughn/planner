@@ -28,17 +28,20 @@ function dispatchMouseEvent(element, type, pointOrRect) {
 }
 
 async function openContextMenu(page, taskName) {
-  await page.evaluate(({code, name}) => {
-    const canvas = document.querySelector("canvas");
-    const rect = window.__PLANNER_TEST_ONLY_FIND_TASK_RECT(name);
+  await page.evaluate(
+    ({ code, name }) => {
+      const canvas = document.querySelector("canvas");
+      const rect = window.__PLANNER_TEST_ONLY_FIND_TASK_RECT(name);
 
-    const fn = eval(code);
-    fn(canvas, "mousemove", rect);
-    fn(canvas, "contextmenu", rect);
-  }, {
-    code: dispatchEventCodeString,
-    name: taskName
-  });
+      const fn = eval(code);
+      fn(canvas, "mousemove", rect);
+      fn(canvas, "contextmenu", rect);
+    },
+    {
+      code: dispatchEventCodeString,
+      name: taskName,
+    }
+  );
 }
 
 // Pass into page scope and eval to access dispatchMouseEvent() function.
@@ -49,21 +52,21 @@ const TASKS = [
     name: "Long text that gets clipped",
     start: "2022-04-01 12:00",
     stop: "2022-04-01",
-    owner: 'bvaughn',
+    owner: "bvaughn",
     id: 1,
   },
   {
     name: "Short text",
     start: "2022-04-03",
     stop: "2022-04-04",
-    owner: 'bvaughn',
+    owner: "bvaughn",
     id: 2,
   },
   {
     name: "Task with no URL",
     start: "2022-04-01",
     stop: "2022-04-03",
-    owner: 'team',
+    owner: "team",
     id: 3,
   },
   {
@@ -71,18 +74,18 @@ const TASKS = [
     start: "2022-04-04",
     stop: "2022-04-07",
     url: "about:blank",
-    owner: 'team',
+    owner: "team",
     id: 4,
   },
 ];
 
 const TEAM = {
   bvaughn: {
-    name: 'Brian Vaughn'
+    name: "Brian Vaughn",
   },
   team: {
-    name: "Team"
-  }
+    name: "Team",
+  },
 };
 
 test.describe("Mouse controls", () => {
@@ -290,12 +293,15 @@ test.describe("Mouse controls", () => {
     });
 
     await page.waitForSelector('[data-testname="Input-TaskName"]');
-    await page.fill('[data-testname="Input-TaskName"]', 'Updated short text');
-    await page.selectOption('[data-testname="Input-TaskOwner"]', 'team');
-    await page.fill('[data-testname="Input-TaskStartDate"]', '2022-04-05');
-    await page.fill('[data-testname="Input-TaskStopDate"]', '2022-04-06');
+    await page.fill('[data-testname="Input-TaskName"]', "Updated short text");
+    await page.selectOption('[data-testname="Input-TaskOwner"]', "team");
+    await page.fill('[data-testname="Input-TaskStartDate"]', "2022-04-05");
+    await page.fill('[data-testname="Input-TaskStopDate"]', "2022-04-06");
     await page.check('[data-testname="Input-TaskOngoing"]');
-    await page.selectOption('[data-testname="Input-TaskDependency"]', `${TASKS[0].id}`);
+    await page.selectOption(
+      '[data-testname="Input-TaskDependency"]',
+      `${TASKS[0].id}`
+    );
     await page.evaluate(() => {
       const saveButton = document.querySelector(
         '[data-testname="Input-TaskSaveButton"]'
@@ -317,9 +323,9 @@ test.describe("Mouse controls", () => {
     });
 
     await page.waitForSelector('[data-testname="Input-TaskName"]');
-    await page.selectOption('[data-testname="Input-TaskOwner"]', 'bvaughn');
+    await page.selectOption('[data-testname="Input-TaskOwner"]', "bvaughn");
     await page.uncheck('[data-testname="Input-TaskOngoing"]');
-    await page.selectOption('[data-testname="Input-TaskDependency"]', '');
+    await page.selectOption('[data-testname="Input-TaskDependency"]', "");
     await page.evaluate(() => {
       const saveButton = document.querySelector(
         '[data-testname="Input-TaskSaveButton"]'
