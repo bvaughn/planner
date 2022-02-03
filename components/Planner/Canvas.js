@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import MouseControls from "./MouseControls";
 import createDrawingUtils from "./drawingUtils";
+import useScrollState from "./useScrollState";
 import { openInNewTab } from "../utils/url";
 
 // Processes data; arguably should be moved into Preloader component.
@@ -36,6 +37,8 @@ export default function Canvas({
 
   const canvasRef = useRef();
 
+  const scrollState = useScrollState(canvasRef, metadata, width);
+
   const [hoveredTask, setHoveredTask] = useState(null);
 
   useLayoutEffect(() => {
@@ -60,16 +63,17 @@ export default function Canvas({
 
     // Draw background grid first.
     // This marks off months and weeks.
-    drawUnitGrid(context, metadata, width, height);
+    drawUnitGrid(context, metadata, scrollState, width, height);
 
     // Render header text for month columns.
-    drawUnitHeaders(context, metadata, width);
+    drawUnitHeaders(context, metadata, scrollState, width);
 
     for (let taskIndex = 0; taskIndex < metadata.tasks.length; taskIndex++) {
       drawTaskRow(
         context,
         taskIndex,
         metadata,
+        scrollState,
         team,
         ownerToImageMap,
         width,
@@ -84,7 +88,8 @@ export default function Canvas({
         dependentTasks,
         parentTask,
         width,
-        metadata
+        metadata,
+        scrollState
       );
     });
   }, [
@@ -107,6 +112,7 @@ export default function Canvas({
 
     // Component state
     hoveredTask,
+    scrollState,
   ]);
 
   return (

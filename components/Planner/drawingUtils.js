@@ -39,7 +39,7 @@ export default function createDrawingUtils({
 }) {
   const TASK_ROW_HEIGHT = MARGIN + AVATAR_SIZE + MARGIN;
 
-  function getIntervalWidth(chartWidth, metadata) {
+  function getIntervalWidth(metadata, scrollState, chartWidth) {
     let intervalWidth = 0;
     if (metadata.intervalRange.length === 1) {
       intervalWidth = chartWidth;
@@ -47,11 +47,13 @@ export default function createDrawingUtils({
       const x0 = getDateLocation(
         metadata.intervalRange[0],
         metadata,
+        scrollState,
         chartWidth
       );
       const x1 = getDateLocation(
         metadata.intervalRange[1],
         metadata,
+        scrollState,
         chartWidth
       );
       intervalWidth = x1 - x0;
@@ -59,7 +61,7 @@ export default function createDrawingUtils({
     return intervalWidth;
   }
 
-  function getDateLocation(date, metadata, chartWidth) {
+  function getDateLocation(date, metadata, scrollState, chartWidth) {
     const dateRangeDelta =
       metadata.stopDate.epochMilliseconds -
       metadata.startDate.epochMilliseconds;
@@ -72,20 +74,22 @@ export default function createDrawingUtils({
       )
     );
 
-    return chartWidth * offset;
+    // This is the only place that needs to account for zoom/scale and offset.
+    // because all other positioning logic (including width) is based on this return value.
+    return chartWidth * offset * scrollState.scaleX + scrollState.offsetX;
   }
 
   function shouldShowAvatar(taskRect, image) {
     return taskRect.width > getAvatarRect(taskRect, image).width * 2;
   }
 
-  function getTaskRect(task, metadata, chartWidth) {
+  function getTaskRect(task, metadata, scrollState, chartWidth) {
     const rowIndex = metadata.taskToRowIndexMap.get(task);
     const { start, stop } = metadata.taskToTemporalMap.get(task);
 
-    const x = getDateLocation(start, metadata, chartWidth);
+    const x = getDateLocation(start, metadata, scrollState, chartWidth);
     const y = HEADER_HEIGHT + MARGIN + rowIndex * TASK_ROW_HEIGHT;
-    const width = getDateLocation(stop, metadata, chartWidth) - x;
+    const width = getDateLocation(stop, metadata, scrollState, chartWidth) - x;
     const height = TASK_ROW_HEIGHT;
 
     return { x, y, width, height };
@@ -122,24 +126,35 @@ export default function createDrawingUtils({
     }
   }
 
-  function getTextRect(taskRect, image) {
+  function getTextRect(taskRect, image, scrollState) {
+    let rect;
+
     const showAvatar = shouldShowAvatar(taskRect, image);
     if (showAvatar) {
       const avatarRect = getAvatarRect(taskRect, image);
-      return {
+
+      rect = {
         x: avatarRect.x + avatarRect.width + PADDING,
         y: taskRect.y,
         width: taskRect.width - avatarRect.width - PADDING * 2,
         height: taskRect.height,
       };
     } else {
-      return {
+      rect = {
         x: taskRect.x + PADDING,
         y: taskRect.y,
         width: taskRect.width - PADDING * 2,
         height: taskRect.height,
       };
     }
+
+    // Ensure text is always visible (even when zoomed)
+    if (rect.x < 0) {
+      rect.width = rect.width + rect.x;
+      rect.x = 0;
+    }
+
+    return rect;
   }
 
   function drawOwnerAvatar(
@@ -263,9 +278,10 @@ export default function createDrawingUtils({
     color,
     avatar,
     metadata,
+    scrollState,
     isHovered
   ) {
-    const textRect = getTextRect(taskRect, avatar?.image);
+    const textRect = getTextRect(taskRect, avatar?.image, scrollState);
 
     const height = (textRect.height - PADDING * 2 - PADDING) / 2;
     const verticalCenter = textRect.y + textRect.height / 2;
@@ -326,6 +342,7 @@ export default function createDrawingUtils({
   function drawTaskBar(
     context,
     metadata,
+    scrollState,
     task,
     taskRect,
     color,
@@ -359,13 +376,19 @@ export default function createDrawingUtils({
     context,
     taskIndex,
     metadata,
+    scrollState,
     team,
     ownerToImageMap,
     chartWidth,
     hoveredTask
   ) {
     const task = metadata.tasks[taskIndex];
-    const taskRect = getTaskRect(task, metadata, chartWidth);
+    const taskRect = getTaskRect(task, metadata, scrollState, chartWidth);
+
+    // Do not render tasks that are not at least partially visible.
+    if (taskRect.x + taskRect.width <= 0 || taskRect.x >= chartWidth) {
+      return;
+    }
 
     const isHovered = task === hoveredTask;
 
@@ -380,6 +403,7 @@ export default function createDrawingUtils({
     drawTaskBar(
       context,
       metadata,
+      scrollState,
       task,
       taskRect,
       color,
@@ -395,18 +419,25 @@ export default function createDrawingUtils({
       color,
       avatar,
       metadata,
+      scrollState,
       isHovered
     );
   }
 
-  function drawUnitGrid(context, metadata, chartWidth, chartHeight) {
+  function drawUnitGrid(
+    context,
+    metadata,
+    scrollState,
+    chartWidth,
+    chartHeight
+  ) {
     let prevX = 0;
 
     // We don't need to draw the first grid line because it's always left-aligned.
     for (let index = 1; index <= metadata.intervalRange.length - 1; index++) {
       const date = metadata.intervalRange[index];
 
-      const x = getDateLocation(date, metadata, chartWidth);
+      const x = getDateLocation(date, metadata, scrollState, chartWidth);
 
       context.beginPath();
       context.fillStyle = index % 2 === 0 ? LIGHT_GRAY : WHITE;
@@ -417,13 +448,14 @@ export default function createDrawingUtils({
     }
   }
 
-  function drawUnitHeaders(context, metadata, chartWidth) {
-    const intervalWidth = getIntervalWidth(chartWidth, metadata);
+  function drawUnitHeaders(context, metadata, scrollState, chartWidth) {
+    const intervalWidth = getIntervalWidth(metadata, scrollState, chartWidth);
     if (intervalWidth > 0) {
       for (let index = 0; index < metadata.intervalRange.length - 1; index++) {
         const date = metadata.intervalRange[index];
 
-        const x = getDateLocation(date, metadata, chartWidth) + PADDING;
+        const x =
+          getDateLocation(date, metadata, scrollState, chartWidth) + PADDING;
         const y = 0;
         const width = intervalWidth - PADDING * 2;
         const height = HEADER_HEIGHT;
@@ -442,7 +474,8 @@ export default function createDrawingUtils({
     dependentTasks,
     parentTask,
     chartWidth,
-    metadata
+    metadata,
+    scrollState
   ) {
     let firstTask = null;
     let lowestTask = null;
@@ -470,10 +503,20 @@ export default function createDrawingUtils({
       return;
     }
 
-    const highestTaskRect = getTaskRect(firstTask, metadata, chartWidth);
-    const lowestTaskRect = getTaskRect(lowestTask, metadata, chartWidth);
+    const highestTaskRect = getTaskRect(
+      firstTask,
+      metadata,
+      scrollState,
+      chartWidth
+    );
+    const lowestTaskRect = getTaskRect(
+      lowestTask,
+      metadata,
+      scrollState,
+      chartWidth
+    );
     const parentBarRect = getBarRect(
-      getTaskRect(parentTask, metadata, chartWidth)
+      getTaskRect(parentTask, metadata, scrollState, chartWidth)
     );
 
     const x = Math.max(
@@ -501,7 +544,12 @@ export default function createDrawingUtils({
     // Draw horizontal lines (with arrows) to connect each dependent task.
     for (let i = 0; i < dependentTasks.length; i++) {
       const dependantTask = dependentTasks[i];
-      const dependantBarRect = getTaskRect(dependantTask, metadata, chartWidth);
+      const dependantBarRect = getTaskRect(
+        dependantTask,
+        metadata,
+        scrollState,
+        chartWidth
+      );
 
       const x0 = x;
       const x1 = dependantBarRect.x - MARGIN;
