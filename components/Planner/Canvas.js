@@ -60,6 +60,9 @@ export default function Canvas({
       return rect;
     };
 
+    // HACK Expose scroll state on the global space so that Playwright can use it for e2e tests.
+    window.__PLANNER_TEST_ONLY_SCROLL_STATE = scrollState;
+
     const scale = window.devicePixelRatio;
     canvas.width = Math.floor(width * scale);
     canvas.height = Math.floor(height * scale);

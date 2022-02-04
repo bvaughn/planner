@@ -72,7 +72,7 @@ function reduce(state, action) {
 
         return {
           ...state,
-          offsetX,
+          offsetX: Math.round(offsetX),
         };
       } else if (deltaY !== 0) {
         const maxOffsetY = height - naturalHeight;
@@ -83,7 +83,7 @@ function reduce(state, action) {
 
         return {
           ...state,
-          offsetY,
+          offsetY: Math.round(offsetY),
         };
       }
     }
@@ -107,7 +107,7 @@ function reduce(state, action) {
 
       return {
         ...state,
-        offsetX: newClampedOffsetX,
+        offsetX: Math.round(newClampedOffsetX),
         scaleX,
       };
     }
