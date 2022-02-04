@@ -9,8 +9,8 @@ const MAX_HEIGHT = 100;
 const NUM_HOURS = 24;
 const COLUMN_COUNTS = [24, 12, 8, 6, 4, 2, 1];
 const ZOOM_DELTA = 250;
-const HORIZONTAL_PANL_DELTA = 250;
-const VERTICAL_PANL_DELTA = 25;
+const HORIZONTAL_PAN_DELTA = 250;
+const VERTICAL_PAN_DELTA = 25;
 
 // Build up a grid of tasks so that the zoom and pan tests will be more meaningful/precise.
 const tasks = [];
@@ -40,8 +40,8 @@ const team = {
   },
 };
 
-function dispatchMouseEvent(element, type, eventProperties) {
-  const event = new CustomEvent(type);
+function dispatchMouseEvent(element, type, eventProperties, bubbles = true) {
+  const event = new CustomEvent(type, { bubbles });
 
   for (let key in eventProperties) {
     event[key] = eventProperties[key];
@@ -54,17 +54,21 @@ function dispatchMouseEvent(element, type, eventProperties) {
   window.event = undefined;
 }
 
-async function dispatchWheelEvent(page, eventProperties) {
+// Pass into page scope and eval to access dispatchMouseEvent() function.
+const dispatchEventCodeString = `(${dispatchMouseEvent.toString()})`;
+
+async function dispatchCanvasEvent(page, type, eventProperties) {
   await page.evaluate(
-    ({ code, eventProperties }) => {
+    ({ code, eventProperties, type }) => {
       const canvas = document.querySelector("canvas");
 
       const fn = eval(code);
-      fn(canvas, "wheel", eventProperties);
+      fn(canvas, type, eventProperties);
     },
     {
       code: dispatchEventCodeString,
       eventProperties,
+      type,
     }
   );
 }
@@ -73,185 +77,326 @@ async function getScrollState(page) {
   return await page.evaluate(() => window.__PLANNER_TEST_ONLY_SCROLL_STATE);
 }
 
+async function dragBy(page, x, y) {
+  await dispatchCanvasEvent(page, "mousedown");
+
+  await dispatchCanvasEvent(page, "mousemove", {
+    movementX: x,
+    movementY: y,
+  });
+
+  await dispatchCanvasEvent(page, "mouseup");
+}
+
+async function panBy(page, x, y) {
+  await dispatchCanvasEvent(page, "wheel", {
+    deltaX: x,
+    deltaY: y,
+    shiftKey: Math.abs(y) > Math.abs(x),
+  });
+}
+
 async function zoomBy(page, deltaY, x = 0) {
-  await dispatchWheelEvent(page, {
+  await dispatchCanvasEvent(page, "wheel", {
     x,
     deltaX: 0,
     deltaY,
   });
 }
 
-async function panBy(page, deltaX, deltaY) {
-  await dispatchWheelEvent(page, {
-    deltaX,
-    deltaY,
-    shiftKey: Math.abs(deltaY) > Math.abs(deltaX),
-  });
-}
-
-// Pass into page scope and eval to access dispatchMouseEvent() function.
-const dispatchEventCodeString = `(${dispatchMouseEvent.toString()})`;
-
 test.describe("Pan and zoom", () => {
-  test("should pan (scroll) vertically", async ({ page }) => {
-    await loadData(page, { tasks, team }, MAX_HEIGHT);
-
-    let snapshotIndex = 0;
-
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
-      "vertical-pan",
-      `${snapshotIndex++}.png`,
-    ]);
-
-    let prevOffsetY = 0;
-    while (true) {
-      await panBy(page, 0, VERTICAL_PANL_DELTA);
-
-      const scrollState = await getScrollState(page);
-
-      if (prevOffsetY !== scrollState.offsetY) {
-        expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
-          "vertical-pan",
-          `${snapshotIndex++}-down.png`,
-        ]);
-
-        prevOffsetY = scrollState.offsetY;
-      } else {
-        break;
-      }
-    }
-
-    while (true) {
-      await panBy(page, 0, 0 - VERTICAL_PANL_DELTA);
-
-      const scrollState = await getScrollState(page);
-
-      if (prevOffsetY !== scrollState.offsetY) {
-        expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
-          "vertical-pan",
-          `${snapshotIndex++}-up.png`,
-        ]);
-
-        prevOffsetY = scrollState.offsetY;
-      } else {
-        break;
-      }
-    }
-  });
-
-  test("should pan (scroll) horizontally", async ({ page }) => {
-    await loadData(page, { tasks, team });
-
-    let snapshotIndex = 0;
-
-    // Begin by zooming in so we can pan
-    await zoomBy(page, 0 - ZOOM_DELTA);
-
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
-      "horizontal-pan",
-      `${snapshotIndex++}.png`,
-    ]);
-
-    let prevOffsetX = 0;
-    while (true) {
-      await panBy(page, HORIZONTAL_PANL_DELTA, 0);
-
-      const scrollState = await getScrollState(page);
-
-      if (prevOffsetX !== scrollState.offsetX) {
-        expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
-          "horizontal-pan",
-          `${snapshotIndex++}-right.png`,
-        ]);
-
-        prevOffsetX = scrollState.offsetX;
-      } else {
-        break;
-      }
-    }
-
-    while (true) {
-      await panBy(page, 0 - HORIZONTAL_PANL_DELTA, 0);
-
-      const scrollState = await getScrollState(page);
-
-      if (prevOffsetX !== scrollState.offsetX) {
-        expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
-          "horizontal-pan",
-          `${snapshotIndex++}-left.png`,
-        ]);
-
-        prevOffsetX = scrollState.offsetX;
-      } else {
-        break;
-      }
-    }
-  });
-
-  test("should zoom horizontally (centered around cursor location)", async ({
-    page,
-  }) => {
-    await loadData(page, { tasks, team });
-
-    const rect = await page.evaluate(() => {
-      const canvas = document.querySelector("canvas");
-      const rect = canvas.getBoundingClientRect();
-      return { x: rect.x, width: rect.width };
-    });
-
-    const horizontalCoordinates = [
-      rect.x + 0,
-      rect.x + rect.width / 2,
-      rect.x + rect.width,
-    ];
-
-    for (let i = 0; i < horizontalCoordinates.length; i++) {
-      const x = horizontalCoordinates[i];
+  test.describe("wheel", () => {
+    test("should pan (scroll) vertically", async ({ page }) => {
+      await loadData(page, { tasks, team }, MAX_HEIGHT);
 
       let snapshotIndex = 0;
 
       expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
-        "zoom",
-        `at-position-${x}`,
+        "vertical-pan",
         `${snapshotIndex++}.png`,
       ]);
 
-      let prevScaleX = 0;
+      let prevOffsetY = 0;
       while (true) {
-        await zoomBy(page, 0 - ZOOM_DELTA, x);
+        await panBy(page, 0, VERTICAL_PAN_DELTA);
 
         const scrollState = await getScrollState(page);
 
-        if (prevScaleX !== scrollState.scaleX) {
+        if (prevOffsetY !== scrollState.offsetY) {
           expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
-            "zoom",
-            `at-position-${x}`,
-            `${snapshotIndex++}-in.png`,
+            "vertical-pan",
+            `${snapshotIndex++}-down.png`,
           ]);
 
-          prevScaleX = scrollState.scaleX;
+          prevOffsetY = scrollState.offsetY;
         } else {
           break;
         }
       }
 
       while (true) {
-        await zoomBy(page, ZOOM_DELTA, x);
+        await panBy(page, 0, 0 - VERTICAL_PAN_DELTA);
 
         const scrollState = await getScrollState(page);
 
-        if (prevScaleX !== scrollState.scaleX) {
+        if (prevOffsetY !== scrollState.offsetY) {
           expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
-            "zoom",
-            `at-position-${x}`,
-            `${snapshotIndex++}-out.png`,
+            "vertical-pan",
+            `${snapshotIndex++}-up.png`,
           ]);
 
-          prevScaleX = scrollState.scaleX;
+          prevOffsetY = scrollState.offsetY;
         } else {
           break;
         }
       }
-    }
+    });
+
+    test("should pan (scroll) horizontally", async ({ page }) => {
+      await loadData(page, { tasks, team });
+
+      let snapshotIndex = 0;
+
+      // Begin by zooming in so we can pan
+      await zoomBy(page, 0 - ZOOM_DELTA);
+
+      expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+        "horizontal-pan",
+        `${snapshotIndex++}.png`,
+      ]);
+
+      let prevOffsetX = 0;
+      while (true) {
+        await panBy(page, HORIZONTAL_PAN_DELTA, 0);
+
+        const scrollState = await getScrollState(page);
+
+        if (prevOffsetX !== scrollState.offsetX) {
+          expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+            "horizontal-pan",
+            `${snapshotIndex++}-right.png`,
+          ]);
+
+          prevOffsetX = scrollState.offsetX;
+        } else {
+          break;
+        }
+      }
+
+      while (true) {
+        await panBy(page, 0 - HORIZONTAL_PAN_DELTA, 0);
+
+        const scrollState = await getScrollState(page);
+
+        if (prevOffsetX !== scrollState.offsetX) {
+          expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+            "horizontal-pan",
+            `${snapshotIndex++}-left.png`,
+          ]);
+
+          prevOffsetX = scrollState.offsetX;
+        } else {
+          break;
+        }
+      }
+    });
+
+    test("should zoom horizontally (centered around cursor location)", async ({
+      page,
+    }) => {
+      await loadData(page, { tasks, team });
+
+      const rect = await page.evaluate(() => {
+        const canvas = document.querySelector("canvas");
+        const rect = canvas.getBoundingClientRect();
+        return { x: rect.x, width: rect.width };
+      });
+
+      const horizontalCoordinates = [
+        rect.x + 0,
+        rect.x + rect.width / 2,
+        rect.x + rect.width,
+      ];
+
+      for (let i = 0; i < horizontalCoordinates.length; i++) {
+        const x = horizontalCoordinates[i];
+
+        let snapshotIndex = 0;
+
+        expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+          "zoom",
+          `at-position-${x}`,
+          `${snapshotIndex++}.png`,
+        ]);
+
+        let prevScaleX = 0;
+        while (true) {
+          await zoomBy(page, 0 - ZOOM_DELTA, x);
+
+          const scrollState = await getScrollState(page);
+
+          if (prevScaleX !== scrollState.scaleX) {
+            expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+              "zoom",
+              `at-position-${x}`,
+              `${snapshotIndex++}-in.png`,
+            ]);
+
+            prevScaleX = scrollState.scaleX;
+          } else {
+            break;
+          }
+        }
+
+        while (true) {
+          await zoomBy(page, ZOOM_DELTA, x);
+
+          const scrollState = await getScrollState(page);
+
+          if (prevScaleX !== scrollState.scaleX) {
+            expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+              "zoom",
+              `at-position-${x}`,
+              `${snapshotIndex++}-out.png`,
+            ]);
+
+            prevScaleX = scrollState.scaleX;
+          } else {
+            break;
+          }
+        }
+      }
+    });
+  });
+
+  test.describe("click and drag", () => {
+    test("should drag (scroll) vertically", async ({ page }) => {
+      await loadData(page, { tasks, team }, MAX_HEIGHT);
+
+      let snapshotIndex = 0;
+
+      expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+        "vertical-drag",
+        `${snapshotIndex++}.png`,
+      ]);
+
+      let prevOffsetY = 0;
+      while (true) {
+        await dragBy(page, 0, 0 - VERTICAL_PAN_DELTA);
+
+        const scrollState = await getScrollState(page);
+
+        if (prevOffsetY !== scrollState.offsetY) {
+          expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+            "vertical-drag",
+            `${snapshotIndex++}-down.png`,
+          ]);
+
+          prevOffsetY = scrollState.offsetY;
+        } else {
+          break;
+        }
+      }
+
+      while (true) {
+        await dragBy(page, 0, VERTICAL_PAN_DELTA);
+
+        const scrollState = await getScrollState(page);
+
+        if (prevOffsetY !== scrollState.offsetY) {
+          expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+            "vertical-drag",
+            `${snapshotIndex++}-up.png`,
+          ]);
+
+          prevOffsetY = scrollState.offsetY;
+        } else {
+          break;
+        }
+      }
+    });
+
+    test("should drag (scroll) horizontally", async ({ page }) => {
+      await loadData(page, { tasks, team });
+
+      let snapshotIndex = 0;
+
+      // Begin by zooming in so we can drag
+      await zoomBy(page, 0 - ZOOM_DELTA);
+
+      expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+        "horizontal-drag",
+        `${snapshotIndex++}.png`,
+      ]);
+
+      let prevOffsetX = 0;
+      while (true) {
+        await dragBy(page, 0 - HORIZONTAL_PAN_DELTA, 0);
+
+        const scrollState = await getScrollState(page);
+
+        if (prevOffsetX !== scrollState.offsetX) {
+          expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+            "horizontal-drag",
+            `${snapshotIndex++}-right.png`,
+          ]);
+
+          prevOffsetX = scrollState.offsetX;
+        } else {
+          break;
+        }
+      }
+
+      while (true) {
+        await dragBy(page, HORIZONTAL_PAN_DELTA, 0);
+
+        const scrollState = await getScrollState(page);
+
+        if (prevOffsetX !== scrollState.offsetX) {
+          expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+            "horizontal-drag",
+            `${snapshotIndex++}-left.png`,
+          ]);
+
+          prevOffsetX = scrollState.offsetX;
+        } else {
+          break;
+        }
+      }
+    });
+
+    test("should ignore mouse movements when not dragging", async ({
+      page,
+    }) => {
+      await loadData(page, { tasks, team }, MAX_HEIGHT);
+
+      // Begin by zooming in so we can drag
+      await zoomBy(page, 0 - ZOOM_DELTA);
+
+      expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+        "not-dragging",
+        "default.png",
+      ]);
+
+      await dispatchCanvasEvent(page, "mousemove", {
+        movementX: HORIZONTAL_PAN_DELTA,
+        movementY: 0,
+      });
+
+      expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+        "not-dragging",
+        "default.png",
+      ]);
+
+      await dispatchCanvasEvent(page, "mousemove", {
+        movementX: 0,
+        movementY: VERTICAL_PAN_DELTA,
+      });
+
+      expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
+        "not-dragging",
+        "default.png",
+      ]);
+    });
   });
 });

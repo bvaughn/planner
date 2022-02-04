@@ -8,10 +8,14 @@ const ZOOM_DELTA_THRESHOLD = 1;
 const ZOOM_MULTIPLIER = 0.01;
 
 const DEFAULT_STATE = {
+  // Passed in externally
   height: 0,
-  width: 0,
   metadata: null,
   naturalHeight: 0,
+  width: 0,
+
+  // Managed internally
+  isDragging: false,
   offsetX: 0,
   offsetY: 0,
   scaleX: 1,
@@ -46,11 +50,20 @@ function reduce(state, action) {
         width,
       };
     }
+    case "set-is-dragging": {
+      const { isDragging } = payload;
+      return {
+        ...state,
+        isDragging,
+      };
+      break;
+    }
     case "set-metadata": {
       const { metadata } = payload;
       return {
         ...state,
         metadata,
+        isDragging: false,
         offsetX: 0,
         offsetY: 0,
         scaleX: 1,
@@ -150,6 +163,52 @@ export default function useScrollState({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
+      const handleMouseDown = (event) => {
+        dispatch({ type: "set-is-dragging", payload: { isDragging: true } });
+      };
+
+      const handleMouseMove = (event) => {
+        const currentState = stateRef.current;
+        if (!currentState.isDragging) {
+          return;
+        }
+
+        const { movementX, movementY } = event;
+
+        const movementYAbsolute = Math.abs(movementY);
+        const movementXAbsolute = Math.abs(movementX);
+
+        if (movementYAbsolute > movementXAbsolute) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (movementYAbsolute > PAN_DELTA_THRESHOLD) {
+            const deltaY = 0 - movementY;
+
+            dispatch({
+              type: "pan",
+              payload: { deltaX: 0, deltaY },
+            });
+          }
+        } else {
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (movementXAbsolute > PAN_DELTA_THRESHOLD) {
+            const deltaX = 0 - movementX;
+
+            dispatch({
+              type: "pan",
+              payload: { deltaX, deltaY: 0 },
+            });
+          }
+        }
+      };
+
+      const handleMouseUp = (event) => {
+        dispatch({ type: "set-is-dragging", payload: { isDragging: false } });
+      };
+
       const handleWheel = (event) => {
         const { shiftKey, x } = event;
         const { deltaX, deltaY } = normalizeWheelEvent(event);
@@ -200,11 +259,18 @@ export default function useScrollState({
         }
       };
 
-      // TODO: Also pan on click-and-drag ("mousedown" -> "mousemove" -> "mouseup")
+      canvas.addEventListener("mousedown", handleMouseDown);
       canvas.addEventListener("wheel", handleWheel);
 
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+
       return () => {
+        canvas.removeEventListener("mousedown", handleMouseDown);
         canvas.removeEventListener("wheel", handleWheel);
+
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
       };
     }
   }, [canvasRef]);
