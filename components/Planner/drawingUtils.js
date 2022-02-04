@@ -363,7 +363,7 @@ export default function createDrawingUtils({
       context,
       barRect.x,
       barRect.y,
-      barRect.width - MARGIN,
+      barRect.width,
       barRect.height,
       CORNER_RADIUS
     );
