@@ -35,9 +35,8 @@ export default function Canvas({
   } = useMemo(() => createDrawingUtils(config), [config]);
 
   const naturalHeight = HEADER_HEIGHT + metadata.maxRowIndex * TASK_ROW_HEIGHT;
-  const height = maxHeight != null
-    ? Math.min(maxHeight, naturalHeight)
-    : naturalHeight;
+  const height =
+    maxHeight != null ? Math.min(maxHeight, naturalHeight) : naturalHeight;
 
   const canvasRef = useRef();
 
@@ -57,7 +56,7 @@ export default function Canvas({
     // HACK Expose these values on the global space so that Playwright can use them for e2e tests.
     window.__PLANNER_TEST_ONLY_FIND_TASK_RECT = (taskName) => {
       const task = tasks.find(({ name }) => name === taskName);
-      const rect = getTaskRect(task, metadata, width);
+      const rect = getTaskRect(task, metadata, scrollState, width);
       return rect;
     };
 

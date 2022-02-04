@@ -52,15 +52,18 @@ function dispatchMouseEvent(element, type, eventProperties) {
 }
 
 async function dispatchWheelEvent(page, eventProperties) {
-  await page.evaluate(({code, eventProperties}) => {
-    const canvas = document.querySelector("canvas");
+  await page.evaluate(
+    ({ code, eventProperties }) => {
+      const canvas = document.querySelector("canvas");
 
-    const fn = eval(code);
-    fn(canvas, "wheel", eventProperties);
-  }, {
-    code: dispatchEventCodeString,
-    eventProperties,
-  });
+      const fn = eval(code);
+      fn(canvas, "wheel", eventProperties);
+    },
+    {
+      code: dispatchEventCodeString,
+      eventProperties,
+    }
+  );
 }
 
 // Pass into page scope and eval to access dispatchMouseEvent() function.
@@ -77,36 +80,44 @@ test.describe("Pan and zoom", () => {
     );
 
     await dispatchWheelEvent(page, {
-      x: 10,       // Not relevant for vertical scrolls
-      deltaX: 25,  // Smaller axis delta should be ignored
+      x: 10, // Not relevant for vertical scrolls
+      deltaX: 25, // Smaller axis delta should be ignored
       deltaY: 50,
       shiftKey: true,
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('pan-down.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "pan-down.png"
+    );
 
     await dispatchWheelEvent(page, {
-      x: 10,       // Not relevant for vertical scrolls
-      deltaX: 25,  // Smaller axis delta should be ignored
+      x: 10, // Not relevant for vertical scrolls
+      deltaX: 25, // Smaller axis delta should be ignored
       deltaY: 500,
       shiftKey: true,
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('pan-down-max.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "pan-down-max.png"
+    );
 
     await dispatchWheelEvent(page, {
-      x: 10,       // Not relevant for vertical scrolls
-      deltaX: 25,  // Smaller axis delta should be ignored
+      x: 10, // Not relevant for vertical scrolls
+      deltaX: 25, // Smaller axis delta should be ignored
       deltaY: -50,
       shiftKey: true,
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('pan-up.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "pan-up.png"
+    );
 
     await dispatchWheelEvent(page, {
-      x: 10,       // Not relevant for vertical scrolls
-      deltaX: 25,  // Smaller axis delta should be ignored
+      x: 10, // Not relevant for vertical scrolls
+      deltaX: 25, // Smaller axis delta should be ignored
       deltaY: -500,
       shiftKey: true,
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('pan-up-max.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "pan-up-max.png"
+    );
   });
 
   test("should pan (scroll) horizontally", async ({ page }) => {
@@ -120,38 +131,50 @@ test.describe("Pan and zoom", () => {
       deltaX: -25, // Smaller axis delta should be ignored
       deltaY: -100,
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('zoom-in.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "zoom-in.png"
+    );
 
     await dispatchWheelEvent(page, {
       x: 0,
       deltaX: 100,
-      deltaY: 10,  // Smaller axis delta should be ignored
+      deltaY: 10, // Smaller axis delta should be ignored
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('pan-right.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "pan-right.png"
+    );
 
     await dispatchWheelEvent(page, {
       x: 0,
       deltaX: 1000,
-      deltaY: 10,  // Smaller axis delta should be ignored
+      deltaY: 10, // Smaller axis delta should be ignored
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('pan-right-max.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "pan-right-max.png"
+    );
 
     await dispatchWheelEvent(page, {
       x: 0,
       deltaX: -100,
-      deltaY: 10,  // Smaller axis delta should be ignored
+      deltaY: 10, // Smaller axis delta should be ignored
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('pan-left.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "pan-left.png"
+    );
 
     await dispatchWheelEvent(page, {
       x: 0,
       deltaX: -1000,
-      deltaY: 10,  // Smaller axis delta should be ignored
+      deltaY: 10, // Smaller axis delta should be ignored
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('pan-left-max.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "pan-left-max.png"
+    );
   });
 
-  test("should zoom horizontally (centered around cursor location)", async ({ page }) => {
+  test("should zoom horizontally (centered around cursor location)", async ({
+    page,
+  }) => {
     expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
       "default.png"
     );
@@ -161,28 +184,36 @@ test.describe("Pan and zoom", () => {
       deltaX: -25, // Smaller axis delta should be ignored
       deltaY: -100,
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('zoom-in.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "zoom-in.png"
+    );
 
     await dispatchWheelEvent(page, {
       x: 0,
       deltaX: -25, // Smaller axis delta should be ignored
       deltaY: -1000,
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('zoom-in-max.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "zoom-in-max.png"
+    );
 
     await dispatchWheelEvent(page, {
       x: 0,
       deltaX: -25, // Smaller axis delta should be ignored
       deltaY: 100,
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('zoom-out.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "zoom-out.png"
+    );
 
     await dispatchWheelEvent(page, {
       x: 0,
       deltaX: -25, // Smaller axis delta should be ignored
       deltaY: 1000,
     });
-    expect(await page.locator("canvas").screenshot()).toMatchSnapshot('zoom-out-max.png');
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "zoom-out-max.png"
+    );
 
     // TODO Text offset clamping
   });
