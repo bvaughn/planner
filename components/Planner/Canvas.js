@@ -8,7 +8,7 @@ import { openInNewTab } from "../utils/url";
 export default function Canvas({
   config,
   editTask,
-  maxHeight = Number.MAX_VALUE,
+  maxHeight,
   metadata,
   ownerToImageMap,
   removeTask,
@@ -35,7 +35,9 @@ export default function Canvas({
   } = useMemo(() => createDrawingUtils(config), [config]);
 
   const naturalHeight = HEADER_HEIGHT + metadata.maxRowIndex * TASK_ROW_HEIGHT;
-  const height = Math.min(maxHeight, naturalHeight);
+  const height = maxHeight != null
+    ? Math.min(maxHeight, naturalHeight)
+    : naturalHeight;
 
   const canvasRef = useRef();
 
