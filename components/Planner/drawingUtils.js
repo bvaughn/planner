@@ -88,7 +88,8 @@ export default function createDrawingUtils({
     const { start, stop } = metadata.taskToTemporalMap.get(task);
 
     const x = getDateLocation(start, metadata, scrollState, chartWidth);
-    const y = HEADER_HEIGHT + MARGIN + rowIndex * TASK_ROW_HEIGHT;
+    const y =
+      HEADER_HEIGHT + MARGIN + rowIndex * TASK_ROW_HEIGHT + scrollState.offsetY;
     const width = getDateLocation(stop, metadata, scrollState, chartWidth) - x;
     const height = TASK_ROW_HEIGHT;
 
@@ -305,9 +306,14 @@ export default function createDrawingUtils({
     context.font = `${FONT_SIZE_NORMAL}px sans-serif`;
     context.fillStyle = fillStyle;
 
-    const [_, isTopClipped] = drawTextToFit(context, task.name, topTextRect, {
-      align: "top",
-    });
+    const { isClipped: isTopClipped } = drawTextToFit(
+      context,
+      task.name,
+      topTextRect,
+      {
+        align: "top",
+      }
+    );
 
     fillStyle =
       getContrastRatio(color, WHITE) > getContrastRatio(color, BLACK)
@@ -322,7 +328,7 @@ export default function createDrawingUtils({
     const ownerNames = getOwnerNames(task, team);
     const durationLabel = getDurationLabel(start, stop, metadata.unit);
 
-    const [__, isBottomClipped] = drawTextToFit(
+    const { isClipped: isBottomClipped } = drawTextToFit(
       context,
       // Try to render names and duration.
       // If that won't fit, all back to rendering just the names.
@@ -431,41 +437,56 @@ export default function createDrawingUtils({
     chartWidth,
     chartHeight
   ) {
-    let prevX = 0;
-
-    // We don't need to draw the first grid line because it's always left-aligned.
-    for (let index = 1; index <= metadata.intervalRange.length - 1; index++) {
+    for (let index = 0; index < metadata.intervalRange.length - 1; index++) {
       const date = metadata.intervalRange[index];
+      const nextDate = metadata.intervalRange[index + 1];
 
       const x = getDateLocation(date, metadata, scrollState, chartWidth);
+      const y = 0;
+      const width =
+        nextDate != null
+          ? getDateLocation(nextDate, metadata, scrollState, chartWidth) - x
+          : chartWidth - x;
+      const height = chartHeight;
+      const fillStyle = index % 2 === 1 ? LIGHT_GRAY : WHITE;
 
       context.beginPath();
-      context.fillStyle = index % 2 === 0 ? LIGHT_GRAY : WHITE;
-      context.rect(prevX, 0, x - prevX, chartHeight);
+      context.fillStyle = fillStyle;
+      context.rect(x, y, width, height);
       context.fill();
-
-      prevX = x;
     }
   }
 
   function drawUnitHeaders(context, metadata, scrollState, chartWidth) {
-    const intervalWidth = getIntervalWidth(metadata, scrollState, chartWidth);
-    if (intervalWidth > 0) {
-      for (let index = 0; index < metadata.intervalRange.length - 1; index++) {
-        const date = metadata.intervalRange[index];
+    for (let index = 0; index < metadata.intervalRange.length - 1; index++) {
+      const date = metadata.intervalRange[index];
+      const nextDate = metadata.intervalRange[index + 1];
 
-        const x =
-          getDateLocation(date, metadata, scrollState, chartWidth) + PADDING;
-        const y = 0;
-        const width = intervalWidth - PADDING * 2;
-        const height = HEADER_HEIGHT;
+      const x = getDateLocation(date, metadata, scrollState, chartWidth);
+      const y = 0;
+      const width =
+        nextDate != null
+          ? getDateLocation(nextDate, metadata, scrollState, chartWidth) - x
+          : chartWidth - x;
+      const height = HEADER_HEIGHT;
+      const fillStyle = index % 2 === 1 ? LIGHT_GRAY : WHITE;
 
-        const text = getIntervalLabel(date, metadata.unit);
+      context.beginPath();
+      context.fillStyle = hexToRgba(fillStyle, 0.9);
+      context.rect(x, y, width, height);
+      context.fill();
 
-        context.font = `bold ${FONT_SIZE_HEADER}px sans-serif`;
-        context.fillStyle = DARK_GRAY;
-        drawTextToFit(context, text, { x, y, width, height });
-      }
+      const text = getIntervalLabel(date, metadata.unit);
+
+      context.font = `bold ${FONT_SIZE_HEADER}px sans-serif`;
+      context.fillStyle = DARK_GRAY;
+
+      drawTextToFit(context, text, {
+        x: x + PADDING,
+        y,
+        width: width - PADDING * 2,
+        height,
+      });
     }
   }
 

@@ -8,15 +8,17 @@ const ZOOM_DELTA_THRESHOLD = 1;
 const ZOOM_MULTIPLIER = 0.01;
 
 const DEFAULT_STATE = {
-  chartWidth: 0,
+  height: 0,
+  width: 0,
   metadata: null,
+  naturalHeight: 0,
   offsetX: 0,
   offsetY: 0,
   scaleX: 1,
 };
 
-// TODO Share with drawingUtils? What about offsetX?
-function getDateLocation(date, metadata, scaleX, chartWidth) {
+// getDateLocation() should be kep in-sync with getDateLocation() in "drawingUtils.js"
+function getDateLocation(date, metadata, scaleX, width) {
   const { startDate, stopDate } = metadata;
 
   const dateRangeDelta =
@@ -29,19 +31,19 @@ function getDateLocation(date, metadata, scaleX, chartWidth) {
     )
   );
 
-  // This is the only place that needs to account for zoom/scale and offset.
-  // because all other positioning logic (including width) is based on this return value.
-  return chartWidth * offset * scaleX;
+  return width * offset * scaleX;
 }
 
 function reduce(state, action) {
   const { payload, type } = action;
   switch (type) {
-    case "set-chart-width": {
-      const { chartWidth } = payload;
+    case "set-chart-size": {
+      const { height, naturalHeight, width } = payload;
       return {
         ...state,
-        chartWidth,
+        height,
+        naturalHeight,
+        width,
       };
     }
     case "set-metadata": {
@@ -56,22 +58,37 @@ function reduce(state, action) {
     }
     case "pan": {
       const { deltaX, deltaY } = payload;
-      const { chartWidth, metadata, scaleX } = state;
+      const { height, metadata, naturalHeight, scaleX, width } = state;
 
-      // TODO Can we cache this on "zoom" (and "set-chart-width") ?
-      const maxOffsetX =
-        chartWidth -
-        getDateLocation(metadata.stopDate, metadata, scaleX, chartWidth);
+      if (deltaX !== 0) {
+        // TODO Can we cache this on "zoom" (and "set-chart-size") ?
+        const maxOffsetX =
+          width - getDateLocation(metadata.stopDate, metadata, scaleX, width);
 
-      const offsetX = Math.min(0, Math.max(maxOffsetX, state.offsetX - deltaX));
+        const offsetX = Math.min(
+          0,
+          Math.max(maxOffsetX, state.offsetX - deltaX)
+        );
 
-      return {
-        ...state,
-        offsetX,
-      };
+        return {
+          ...state,
+          offsetX,
+        };
+      } else if (deltaY !== 0) {
+        const maxOffsetY = height - naturalHeight;
+
+        // TODO Respect natural scroll preference (if we can detect it?).
+        const newOffsetY = state.offsetY - deltaY;
+        const offsetY = Math.min(0, Math.max(maxOffsetY, newOffsetY));
+
+        return {
+          ...state,
+          offsetY,
+        };
+      }
     }
     case "zoom": {
-      const { chartWidth, metadata, offsetX } = state;
+      const { metadata, offsetX, width } = state;
       const { deltaX, deltaY, locationX } = payload;
 
       const scaleX = Math.max(
@@ -80,8 +97,7 @@ function reduce(state, action) {
       );
 
       const maxOffsetX =
-        chartWidth -
-        getDateLocation(metadata.stopDate, metadata, scaleX, chartWidth);
+        width - getDateLocation(metadata.stopDate, metadata, scaleX, width);
 
       // Zoom in/out around the point we're currently hovered over.
       const scaleMultiplier = scaleX / state.scaleX;
@@ -101,15 +117,29 @@ function reduce(state, action) {
   }
 }
 
-export default function useScrollState(canvasRef, metadata, chartWidth) {
+export default function useScrollState({
+  canvasRef,
+  height,
+  naturalHeight,
+  metadata,
+  width,
+}) {
   const [state, dispatch] = useReducer(reduce, DEFAULT_STATE);
-  if (chartWidth !== state.chartWidth) {
-    dispatch({ type: "set-chart-width", payload: { chartWidth } });
+  if (
+    height !== state.height ||
+    naturalHeight !== state.naturalHeight ||
+    width !== state.width
+  ) {
+    dispatch({
+      type: "set-chart-size",
+      payload: { height, naturalHeight, width },
+    });
   }
   if (!Object.is(state.metadata, metadata)) {
     dispatch({ type: "set-metadata", payload: { metadata } });
   }
-  // Share with "wheel" event handlers (only attached on mount).
+
+  // Share with mouse event handlers (only attached on mount).
   const stateRef = useRef(state);
   if (stateRef.current !== state) {
     stateRef.current = state;
@@ -136,7 +166,12 @@ export default function useScrollState(canvasRef, metadata, chartWidth) {
             event.preventDefault();
             event.stopPropagation();
 
-            // TOOD Pan vertically (if content taller than Canvas)
+            if (deltaYAbsolute > PAN_DELTA_THRESHOLD) {
+              dispatch({
+                type: "pan",
+                payload: { deltaX: 0, deltaY },
+              });
+            }
           } else {
             event.preventDefault();
             event.stopPropagation();
@@ -159,12 +194,13 @@ export default function useScrollState(canvasRef, metadata, chartWidth) {
           if (deltaXAbsolute > PAN_DELTA_THRESHOLD) {
             dispatch({
               type: "pan",
-              payload: { deltaX, deltaY },
+              payload: { deltaX, deltaY: 0 },
             });
           }
         }
       };
 
+      // TODO: Also pan on click-and-drag ("mousedown" -> "mousemove" -> "mouseup")
       canvas.addEventListener("wheel", handleWheel);
 
       return () => {

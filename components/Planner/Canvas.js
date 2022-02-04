@@ -8,6 +8,7 @@ import { openInNewTab } from "../utils/url";
 export default function Canvas({
   config,
   editTask,
+  maxHeight = Number.MAX_VALUE,
   metadata,
   ownerToImageMap,
   removeTask,
@@ -33,11 +34,18 @@ export default function Canvas({
     getTaskRect,
   } = useMemo(() => createDrawingUtils(config), [config]);
 
-  const height = HEADER_HEIGHT + metadata.maxRowIndex * TASK_ROW_HEIGHT;
+  const naturalHeight = HEADER_HEIGHT + metadata.maxRowIndex * TASK_ROW_HEIGHT;
+  const height = Math.min(maxHeight, naturalHeight);
 
   const canvasRef = useRef();
 
-  const scrollState = useScrollState(canvasRef, metadata, width);
+  const scrollState = useScrollState({
+    canvasRef,
+    height,
+    metadata,
+    naturalHeight,
+    width,
+  });
 
   const [hoveredTask, setHoveredTask] = useState(null);
 
@@ -65,9 +73,6 @@ export default function Canvas({
     // This marks off months and weeks.
     drawUnitGrid(context, metadata, scrollState, width, height);
 
-    // Render header text for month columns.
-    drawUnitHeaders(context, metadata, scrollState, width);
-
     for (let taskIndex = 0; taskIndex < metadata.tasks.length; taskIndex++) {
       drawTaskRow(
         context,
@@ -92,6 +97,9 @@ export default function Canvas({
         scrollState
       );
     });
+
+    // Render headers last so they remain visible over top of tasks even after panning.
+    drawUnitHeaders(context, metadata, scrollState, width);
   }, [
     // Drawing utils methods
     drawDependencyConnections,

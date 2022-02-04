@@ -33,12 +33,15 @@ export function drawTextToFit(context, textOrTexts, rect, options = {}) {
   for (let i = 0; i < textArray.length; i++) {
     const text = textArray[i];
 
-    let resizedText = false;
+    let isClipped = false;
 
     let textToRender = text;
-    let textWidth = context.measureText(textToRender).width;
+
+    const initialMeasurements = context.measureText(textToRender);
+    let textWidth = initialMeasurements.width;
+    let textHeight = initialMeasurements.height;
     if (textWidth > width) {
-      resizedText = true;
+      isClipped = true;
 
       // If a shorter alternate text has been provided, move onto it.
       if (i < textArray.length - 1) {
@@ -47,11 +50,14 @@ export function drawTextToFit(context, textOrTexts, rect, options = {}) {
 
       while (textWidth >= width && textToRender.length > 1) {
         textToRender = textToRender.substring(0, textToRender.length - 2) + "…";
-        textWidth = context.measureText(textToRender).width;
+
+        const measurements = context.measureText(textToRender);
+        textHeight = measurements.height;
+        textWidth = measurements.width;
       }
     }
 
-    if (!resizedText || renderIfClipped) {
+    if (!isClipped || renderIfClipped) {
       let textBaseline;
       switch (align) {
         case "top":
@@ -74,7 +80,7 @@ export function drawTextToFit(context, textOrTexts, rect, options = {}) {
       context.fillText(textToRender, x, y, width);
     }
 
-    return [textWidth, resizedText];
+    return { isClipped, textHeight, textWidth };
   }
 }
 
