@@ -18,8 +18,8 @@ async function getTestNameInnerText(page, testName) {
   }, testName);
 }
 
-async function loadData(page, data) {
-  const url = getUrlForData(data);
+async function loadData(page, data, maxHeight) {
+  const url = getUrlForData(data, maxHeight);
 
   await page.goto(url, {
     waitUntil: "domcontentloaded",

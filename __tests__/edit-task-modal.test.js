@@ -82,7 +82,7 @@ const TEAM = {
   },
 };
 
-test.describe("Mouse controls", () => {
+test.describe("Edit task modal", () => {
   test.beforeEach(async ({ page }) => {
     await loadData(page, {
       tasks: TASKS,

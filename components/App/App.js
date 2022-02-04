@@ -24,7 +24,7 @@ const NEW_TASK = {
 
 const defaultData = { tasks: initialTasks, team: initialOwners };
 
-export default function App() {
+export default function App({ maxHeight }) {
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [data, setData] = useURLData(defaultData);
 
@@ -138,6 +138,7 @@ export default function App() {
               <Planner
                 config={defaultConfig}
                 editTask={editTask}
+                maxHeight={maxHeight}
                 removeTask={removeTask}
                 resetError={resetError}
                 tasks={tasks}
