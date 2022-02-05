@@ -16,13 +16,13 @@ const DEFAULT_STATE = {
 
   // Managed internally
   isDragging: false,
-  offsetX: 0,
-  offsetY: 0,
-  scaleX: 1,
+  x: 0,
+  y: 0,
+  z: 1,
 };
 
 // getDateLocation() should be kep in-sync with getDateLocation() in "drawingUtils.js"
-function getDateLocation(date, metadata, scaleX, width) {
+function getDateLocation(date, metadata, z, width) {
   const { startDate, stopDate } = metadata;
 
   const dateRangeDelta =
@@ -35,7 +35,7 @@ function getDateLocation(date, metadata, scaleX, width) {
     )
   );
 
-  return width * offset * scaleX;
+  return width * offset * z;
 }
 
 function stopEvent(event) {
@@ -69,64 +69,61 @@ function reduce(state, action) {
         ...state,
         metadata,
         isDragging: false,
-        offsetX: 0,
-        offsetY: 0,
-        scaleX: 1,
+        x: 0,
+        y: 0,
+        z: 1,
       };
     }
     case "pan": {
       const { deltaX, deltaY } = payload;
-      const { height, metadata, naturalHeight, scaleX, width } = state;
+      const { height, metadata, naturalHeight, z, width } = state;
 
       if (deltaX !== 0) {
         // TODO Can we cache this on "zoom" (and "set-chart-size") ?
         const maxOffsetX =
-          width - getDateLocation(metadata.stopDate, metadata, scaleX, width);
+          width - getDateLocation(metadata.stopDate, metadata, z, width);
 
-        const offsetX = Math.min(
-          0,
-          Math.max(maxOffsetX, state.offsetX - deltaX)
-        );
+        const x = Math.min(0, Math.max(maxOffsetX, state.x - deltaX));
 
         return {
           ...state,
-          offsetX: Math.round(offsetX),
+          x: Math.round(x),
         };
       } else if (deltaY !== 0) {
         const maxOffsetY = height - naturalHeight;
 
         // TODO Respect natural scroll preference (if we can detect it?).
-        const newOffsetY = state.offsetY - deltaY;
-        const offsetY = Math.min(0, Math.max(maxOffsetY, newOffsetY));
+        const newOffsetY = state.y - deltaY;
+        const y = Math.min(0, Math.max(maxOffsetY, newOffsetY));
 
         return {
           ...state,
-          offsetY: Math.round(offsetY),
+          y: Math.round(y),
         };
       }
     }
     case "zoom": {
-      const { metadata, offsetX, width } = state;
+      const { metadata, x, width } = state;
       const { deltaX, deltaY, locationX } = payload;
 
-      const scaleX = Math.max(
+      const z = Math.max(
         MIN_SCALE,
-        Math.min(MAX_SCALE, state.scaleX - deltaY * ZOOM_MULTIPLIER)
+        Math.min(MAX_SCALE, state.z - deltaY * ZOOM_MULTIPLIER)
       );
 
       const maxOffsetX =
-        width - getDateLocation(metadata.stopDate, metadata, scaleX, width);
+        width - getDateLocation(metadata.stopDate, metadata, z, width);
 
       // Zoom in/out around the point we're currently hovered over.
-      const scaleMultiplier = scaleX / state.scaleX;
+      const scaleMultiplier = z / state.z;
       const scaledDelta = locationX - locationX * scaleMultiplier;
-      const newOffsetX = offsetX * scaleMultiplier + scaledDelta;
+      const newOffsetX = x * scaleMultiplier + scaledDelta;
       const newClampedOffsetX = Math.min(0, Math.max(maxOffsetX, newOffsetX));
 
       return {
         ...state,
-        offsetX: Math.round(newClampedOffsetX),
-        scaleX,
+        x: Math.round(newClampedOffsetX),
+        z,
       };
     }
     default: {
@@ -135,7 +132,7 @@ function reduce(state, action) {
   }
 }
 
-export default function useScrollState({
+export default function useZoom({
   canvasRef,
   height,
   naturalHeight,

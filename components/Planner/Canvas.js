@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import MouseControls from "./MouseControls";
 import createDrawingUtils from "./drawingUtils";
-import useScrollState from "./useScrollState";
+import useZoom from "./useZoom";
 import { openInNewTab } from "../utils/url";
 
 // Processes data; arguably should be moved into Preloader component.
@@ -40,7 +40,7 @@ export default function Canvas({
 
   const canvasRef = useRef();
 
-  const scrollState = useScrollState({
+  const camera = useZoom({
     canvasRef,
     height,
     metadata,
@@ -56,12 +56,12 @@ export default function Canvas({
     // HACK Expose these values on the global space so that Playwright can use them for e2e tests.
     window.__PLANNER_TEST_ONLY_FIND_TASK_RECT = (taskName) => {
       const task = tasks.find(({ name }) => name === taskName);
-      const rect = getTaskRect(task, metadata, scrollState, width);
+      const rect = getTaskRect(task, metadata, camera, width);
       return rect;
     };
 
     // HACK Expose scroll state on the global space so that Playwright can use it for e2e tests.
-    window.__PLANNER_TEST_ONLY_SCROLL_STATE = scrollState;
+    window.__PLANNER_TEST_ONLY_CAMERA = camera;
 
     const scale = window.devicePixelRatio;
     canvas.width = Math.floor(width * scale);
@@ -75,14 +75,14 @@ export default function Canvas({
 
     // Draw background grid first.
     // This marks off months and weeks.
-    drawUnitGrid(context, metadata, scrollState, width, height);
+    drawUnitGrid(context, metadata, camera, width, height);
 
     for (let taskIndex = 0; taskIndex < metadata.tasks.length; taskIndex++) {
       drawTaskRow(
         context,
         taskIndex,
         metadata,
-        scrollState,
+        camera,
         team,
         ownerToImageMap,
         width,
@@ -98,12 +98,12 @@ export default function Canvas({
         parentTask,
         width,
         metadata,
-        scrollState
+        camera
       );
     });
 
     // Render headers last so they remain visible over top of tasks even after panning.
-    drawUnitHeaders(context, metadata, scrollState, width);
+    drawUnitHeaders(context, metadata, camera, width);
   }, [
     // Drawing utils methods
     drawDependencyConnections,
@@ -124,7 +124,7 @@ export default function Canvas({
 
     // Component state
     hoveredTask,
-    scrollState,
+    camera,
   ]);
 
   return (

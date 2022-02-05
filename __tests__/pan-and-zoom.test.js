@@ -73,8 +73,8 @@ async function dispatchCanvasEvent(page, type, eventProperties) {
   );
 }
 
-async function getScrollState(page) {
-  return await page.evaluate(() => window.__PLANNER_TEST_ONLY_SCROLL_STATE);
+async function getCamera(page) {
+  return await page.evaluate(() => window.__PLANNER_TEST_ONLY_CAMERA);
 }
 
 async function dragBy(page, x, y) {
@@ -120,15 +120,15 @@ test.describe("Pan and zoom", () => {
       while (true) {
         await panBy(page, 0, VERTICAL_PAN_DELTA);
 
-        const scrollState = await getScrollState(page);
+        const camera = await getCamera(page);
 
-        if (prevOffsetY !== scrollState.offsetY) {
+        if (prevOffsetY !== camera.y) {
           expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
             "vertical-pan",
             `${snapshotIndex++}-down.png`,
           ]);
 
-          prevOffsetY = scrollState.offsetY;
+          prevOffsetY = camera.y;
         } else {
           break;
         }
@@ -137,15 +137,15 @@ test.describe("Pan and zoom", () => {
       while (true) {
         await panBy(page, 0, 0 - VERTICAL_PAN_DELTA);
 
-        const scrollState = await getScrollState(page);
+        const camera = await getCamera(page);
 
-        if (prevOffsetY !== scrollState.offsetY) {
+        if (prevOffsetY !== camera.y) {
           expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
             "vertical-pan",
             `${snapshotIndex++}-up.png`,
           ]);
 
-          prevOffsetY = scrollState.offsetY;
+          prevOffsetY = camera.y;
         } else {
           break;
         }
@@ -169,15 +169,15 @@ test.describe("Pan and zoom", () => {
       while (true) {
         await panBy(page, HORIZONTAL_PAN_DELTA, 0);
 
-        const scrollState = await getScrollState(page);
+        const camera = await getCamera(page);
 
-        if (prevOffsetX !== scrollState.offsetX) {
+        if (prevOffsetX !== camera.x) {
           expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
             "horizontal-pan",
             `${snapshotIndex++}-right.png`,
           ]);
 
-          prevOffsetX = scrollState.offsetX;
+          prevOffsetX = camera.x;
         } else {
           break;
         }
@@ -186,15 +186,15 @@ test.describe("Pan and zoom", () => {
       while (true) {
         await panBy(page, 0 - HORIZONTAL_PAN_DELTA, 0);
 
-        const scrollState = await getScrollState(page);
+        const camera = await getCamera(page);
 
-        if (prevOffsetX !== scrollState.offsetX) {
+        if (prevOffsetX !== camera.x) {
           expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
             "horizontal-pan",
             `${snapshotIndex++}-left.png`,
           ]);
 
-          prevOffsetX = scrollState.offsetX;
+          prevOffsetX = camera.x;
         } else {
           break;
         }
@@ -233,16 +233,16 @@ test.describe("Pan and zoom", () => {
         while (true) {
           await zoomBy(page, 0 - ZOOM_DELTA, x);
 
-          const scrollState = await getScrollState(page);
+          const camera = await getCamera(page);
 
-          if (prevScaleX !== scrollState.scaleX) {
+          if (prevScaleX !== camera.z) {
             expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
               "zoom",
               `at-position-${x}`,
               `${snapshotIndex++}-in.png`,
             ]);
 
-            prevScaleX = scrollState.scaleX;
+            prevScaleX = camera.z;
           } else {
             break;
           }
@@ -251,16 +251,16 @@ test.describe("Pan and zoom", () => {
         while (true) {
           await zoomBy(page, ZOOM_DELTA, x);
 
-          const scrollState = await getScrollState(page);
+          const camera = await getCamera(page);
 
-          if (prevScaleX !== scrollState.scaleX) {
+          if (prevScaleX !== camera.z) {
             expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
               "zoom",
               `at-position-${x}`,
               `${snapshotIndex++}-out.png`,
             ]);
 
-            prevScaleX = scrollState.scaleX;
+            prevScaleX = camera.z;
           } else {
             break;
           }
@@ -284,15 +284,15 @@ test.describe("Pan and zoom", () => {
       while (true) {
         await dragBy(page, 0, 0 - VERTICAL_PAN_DELTA);
 
-        const scrollState = await getScrollState(page);
+        const camera = await getCamera(page);
 
-        if (prevOffsetY !== scrollState.offsetY) {
+        if (prevOffsetY !== camera.y) {
           expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
             "vertical-drag",
             `${snapshotIndex++}-down.png`,
           ]);
 
-          prevOffsetY = scrollState.offsetY;
+          prevOffsetY = camera.y;
         } else {
           break;
         }
@@ -301,15 +301,15 @@ test.describe("Pan and zoom", () => {
       while (true) {
         await dragBy(page, 0, VERTICAL_PAN_DELTA);
 
-        const scrollState = await getScrollState(page);
+        const camera = await getCamera(page);
 
-        if (prevOffsetY !== scrollState.offsetY) {
+        if (prevOffsetY !== camera.y) {
           expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
             "vertical-drag",
             `${snapshotIndex++}-up.png`,
           ]);
 
-          prevOffsetY = scrollState.offsetY;
+          prevOffsetY = camera.y;
         } else {
           break;
         }
@@ -333,15 +333,15 @@ test.describe("Pan and zoom", () => {
       while (true) {
         await dragBy(page, 0 - HORIZONTAL_PAN_DELTA, 0);
 
-        const scrollState = await getScrollState(page);
+        const camera = await getCamera(page);
 
-        if (prevOffsetX !== scrollState.offsetX) {
+        if (prevOffsetX !== camera.x) {
           expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
             "horizontal-drag",
             `${snapshotIndex++}-right.png`,
           ]);
 
-          prevOffsetX = scrollState.offsetX;
+          prevOffsetX = camera.x;
         } else {
           break;
         }
@@ -350,15 +350,15 @@ test.describe("Pan and zoom", () => {
       while (true) {
         await dragBy(page, HORIZONTAL_PAN_DELTA, 0);
 
-        const scrollState = await getScrollState(page);
+        const camera = await getCamera(page);
 
-        if (prevOffsetX !== scrollState.offsetX) {
+        if (prevOffsetX !== camera.x) {
           expect(await page.locator("canvas").screenshot()).toMatchSnapshot([
             "horizontal-drag",
             `${snapshotIndex++}-left.png`,
           ]);
 
-          prevOffsetX = scrollState.offsetX;
+          prevOffsetX = camera.x;
         } else {
           break;
         }
