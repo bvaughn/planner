@@ -38,6 +38,11 @@ function getDateLocation(date, metadata, scaleX, width) {
   return width * offset * scaleX;
 }
 
+function stopEvent(event) {
+  event.preventDefault();
+  event.stopImmediatePropagation();
+}
+
 function reduce(state, action) {
   const { payload, type } = action;
   switch (type) {
@@ -179,8 +184,7 @@ export default function useScrollState({
         const movementXAbsolute = Math.abs(movementX);
 
         if (movementYAbsolute > movementXAbsolute) {
-          event.preventDefault();
-          event.stopPropagation();
+          stopEvent(event);
 
           if (movementYAbsolute > PAN_DELTA_THRESHOLD) {
             const deltaY = 0 - movementY;
@@ -191,8 +195,7 @@ export default function useScrollState({
             });
           }
         } else {
-          event.preventDefault();
-          event.stopPropagation();
+          stopEvent(event);
 
           if (movementXAbsolute > PAN_DELTA_THRESHOLD) {
             const deltaX = 0 - movementX;
@@ -222,8 +225,7 @@ export default function useScrollState({
         // Horizontal scrolling pans.
         if (deltaYAbsolute > deltaXAbsolute) {
           if (shiftKey) {
-            event.preventDefault();
-            event.stopPropagation();
+            stopEvent(event);
 
             if (deltaYAbsolute > PAN_DELTA_THRESHOLD) {
               dispatch({
@@ -232,8 +234,7 @@ export default function useScrollState({
               });
             }
           } else {
-            event.preventDefault();
-            event.stopPropagation();
+            stopEvent(event);
 
             if (deltaYAbsolute > ZOOM_DELTA_THRESHOLD) {
               // TODO Can we cache this somehow?
@@ -247,8 +248,7 @@ export default function useScrollState({
             }
           }
         } else {
-          event.preventDefault();
-          event.stopPropagation();
+          stopEvent(event);
 
           if (deltaXAbsolute > PAN_DELTA_THRESHOLD) {
             dispatch({
