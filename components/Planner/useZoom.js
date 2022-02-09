@@ -1,6 +1,8 @@
 import { useEffect, useReducer, useRef } from "react";
 import { normalizeWheelEvent } from "../utils/mouse";
 
+const DOUBLE_TAP_MAX_DURATION = 200;
+const DOUBLE_TAP_ZOOM_IN_DELTA = -50;
 const MIN_SCALE = 1;
 const MAX_SCALE = 10;
 const PAN_DELTA_THRESHOLD = 1;
@@ -13,11 +15,6 @@ const DEFAULT_STATE = {
   metadata: null,
   naturalHeight: 0,
   width: 0,
-
-  // Internal gesture state
-  isDragging: false,
-  lastTouches: null,
-  touchCenterX: 0,
 
   // Current pan and zoom
   x: 0,
@@ -62,14 +59,6 @@ function reduce(state, action) {
         width,
       };
     }
-    case "set-is-dragging": {
-      const { isDragging } = payload;
-      return {
-        ...state,
-        isDragging,
-      };
-      break;
-    }
     case "set-metadata": {
       const { metadata } = payload;
       return {
@@ -77,9 +66,6 @@ function reduce(state, action) {
         metadata,
 
         // Reset scroll state when metadata changes.
-        isDragging: false,
-        lastTouches: null,
-        touchCenterX: 0,
         x: 0,
         y: 0,
         z: 1,
@@ -112,21 +98,6 @@ function reduce(state, action) {
           y: Math.round(y),
         };
       }
-    }
-    case "update-touch-state": {
-      const { lastTouches, touchCenterX } = payload;
-
-      const newState = {
-        ...state,
-        lastTouches,
-      };
-
-      if (touchCenterX !== undefined) {
-        newState.touchCenterX = touchCenterX;
-      }
-
-      return newState;
-      break;
     }
     case "zoom": {
       const { metadata, x, width } = state;
@@ -191,12 +162,17 @@ export default function useZoom({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
+      let currentTouchStartCenterX;
+      let currentTouchStartLength = 0;
+      let currentTouchStartTime = 0;
+      let isDragging;
+      let lastTouches;
+
       const handleMouseDown = (event) => {
-        dispatch({ type: "set-is-dragging", payload: { isDragging: true } });
+        isDragging = true;
       };
 
       const handleMouseMove = (event) => {
-        const { isDragging } = stateRef.current;
         if (!isDragging) {
           return;
         }
@@ -232,19 +208,16 @@ export default function useZoom({
       };
 
       const handleMouseUp = (event) => {
-        dispatch({ type: "set-is-dragging", payload: { isDragging: false } });
+        isDragging = false;
       };
 
       const handleTouchEnd = (event) => {
-        dispatch({
-          type: "update-touch-state",
-          payload: { touchCenterX: null, lastTouches: null },
-        });
+        lastTouches = null;
+        currentTouchStartCenterX = null;
       };
 
       const handleTouchMove = (event) => {
-        const { touchCenterX, lastTouches } = stateRef.current;
-        if (lastTouches === null) {
+        if (lastTouches == null) {
           return;
         }
 
@@ -316,32 +289,44 @@ export default function useZoom({
               type: "zoom",
               payload: {
                 delta,
-                locationX: touchCenterX,
+                locationX: currentTouchStartCenterX,
               },
             });
           }
         }
 
-        dispatch({
-          type: "update-touch-state",
-          payload: { lastTouches: touches, touchCenterX },
-        });
+        lastTouches = touches;
       };
 
       const handleTouchStart = (event) => {
         const { touches } = event;
 
-        const touchCenterX =
-          touches.length === 1
-            ? touches[0].pageX
-            : touches[0].pageX + (touches[1].pageX - touches[0].pageX) / 2;
+        stopEvent(event);
 
-        dispatch({
-          type: "update-touch-state",
-          payload: { touchCenterX, lastTouches: touches },
-        });
+        const length = touches.length;
+        const now = performance.now();
 
-        // TODO Double tab should zoom in around a point.
+        if (
+          now - currentTouchStartTime < DOUBLE_TAP_MAX_DURATION &&
+          length === currentTouchStartLength &&
+          length === 1
+        ) {
+          const locationX = touches[0].pageX;
+
+          dispatch({
+            type: "zoom",
+            payload: { delta: DOUBLE_TAP_ZOOM_IN_DELTA, locationX },
+          });
+        } else {
+          currentTouchStartCenterX =
+            length === 1
+              ? touches[0].pageX
+              : touches[0].pageX + (touches[1].pageX - touches[0].pageX) / 2;
+        }
+
+        lastTouches = touches;
+        currentTouchStartLength = length;
+        currentTouchStartTime = now;
       };
 
       const handleWheel = (event) => {
