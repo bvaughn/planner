@@ -5,7 +5,87 @@ export const LIGHT_GRAY = "#f6f6f6";
 export const SLATE_GRAY = "#c2d0df";
 export const WHITE = "#ffffff";
 
-export function hexToRgb(hex) {
+export const DEFAULT_FALLBACK_COLOR = "#aaaaaa";
+
+export function isValid(color) {
+  if (isHexString(color) || isRgbString(color) || isRgbArray(color)) {
+    return true;
+  } else {
+    return color === "black" || convertColorToString(color) !== "#000000";
+  }
+}
+
+export function colorToHex(color) {
+  if (typeof color === "string") {
+    // Use Canvas to convert string keywords (e.g. "red") to either HEX or RGB values.
+    if (!isHexString(color) && !isRgbString(color)) {
+      color = convertColorToString(color);
+    }
+
+    if (isHexString(color)) {
+      return color;
+    } else if (isRgbString(color)) {
+      return rgbToHex(rgbStringToArray(color));
+    }
+  } else if (isRgbArray(color)) {
+    return rgbToHex(color);
+  }
+
+  return null;
+}
+
+export function colorToRgb(color) {
+  if (typeof color === "string") {
+    // Use Canvas to convert string keywords (e.g. "red") to either HEX or RGB values.
+    if (!isHexString(color) && !isRgbString(color)) {
+      color = convertColorToString(color);
+    }
+
+    if (isHexString(color)) {
+      return hexToRgb(color);
+    } else if (isRgbString(color)) {
+      return rgbStringToArray(color);
+    }
+  } else if (isRgbArray(color)) {
+    return color;
+  }
+
+  return null;
+}
+
+export function colorToRgba(color, alpha) {
+  const rgb = colorToRgb(color);
+  if (rgb) {
+    const [r, g, b] = rgb;
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  return null;
+}
+
+let cachedColors = new Map();
+let cachedCanvasContext = null;
+function convertColorToString(colorString) {
+  if (cachedColors.has(colorString)) {
+    return cachedColors.get(colorString);
+  }
+
+  if (cachedCanvasContext === null) {
+    cachedCanvasContext = document.createElement("canvas").getContext("2d");
+  } else {
+    // Reset canvas to known default color before user color.
+    // Otherise we won't be able to detect an invalid color string.
+    cachedCanvasContext.fillStyle = "#000000";
+  }
+
+  cachedCanvasContext.fillStyle = colorString;
+
+  cachedColors.set(colorString, cachedCanvasContext.fillStyle);
+
+  return cachedCanvasContext.fillStyle;
+}
+
+function hexToRgb(hex) {
   if (hex.length === 4) {
     hex = `#${hex.charAt(1)}${hex.charAt(1)}${hex.charAt(2)}${hex.charAt(
       2
@@ -21,12 +101,44 @@ export function hexToRgb(hex) {
     : null;
 }
 
-export function hexToRgba(hex, alpha) {
-  const [r, g, b] = hexToRgb(hex);
-  return `rgba(${r},${g},${b},${alpha})`;
+function isHexString(color) {
+  return (
+    typeof color === "string" &&
+    color.startsWith("#") &&
+    (color.length === 4 || color.length === 7)
+  );
 }
 
-export function rgbToHex(rgb) {
+function isRgbArray(color) {
+  return (
+    Array.isArray(color) &&
+    array.length === 3 &&
+    Number.isInteger(array[0]) &&
+    Number.isInteger(array[1]) &&
+    Number.isInteger(array[2])
+  );
+}
+
+function isRgbString(color) {
+  return (
+    typeof color === "string" &&
+    (color.startsWith("rgb(") || color.startsWith("rgba("))
+  );
+}
+
+function rgbStringToArray(rgbString) {
+  const match = rgbString.match(/rgb.*\(([0-9]+),\s*([0-9]+),\s*([0-9]+)/);
+  if (match != null) {
+    return [
+      parseInt(match[1]), // r
+      parseInt(match[2]), // g
+      parseInt(match[3]), // b
+    ];
+  }
+  return null;
+}
+
+function rgbToHex(rgb) {
   const [r, g, b] = rgb;
   const number = (r << 16) | (g << 8) | b;
   return `#${number.toString(16).padStart(6, 0)}`;
@@ -35,7 +147,7 @@ export function rgbToHex(rgb) {
 const HIGHLIGHT_OFFSET = 30;
 
 export function highlight(hex) {
-  const rgb = hexToRgb(hex);
+  const rgb = colorToRgb(hex);
   if (getContrastRatio(hex, WHITE) > getContrastRatio(hex, BLACK)) {
     // Lighten
     return rgbToHex(
@@ -48,7 +160,7 @@ export function highlight(hex) {
 }
 
 export function getLuminance(color) {
-  const rgb = Array.isArray(color) ? color : hexToRgb(color);
+  const rgb = Array.isArray(color) ? color : colorToRgb(color);
 
   const values = rgb.map((value) => {
     const n = value / 255;
@@ -60,8 +172,8 @@ export function getLuminance(color) {
 }
 
 export function getContrastRatio(colorA, colorB) {
-  const luminanceA = getLuminance(hexToRgb(colorA));
-  const luminanceB = getLuminance(hexToRgb(colorB));
+  const luminanceA = getLuminance(colorToRgb(colorA));
+  const luminanceB = getLuminance(colorToRgb(colorB));
 
   return (
     (Math.max(luminanceA, luminanceB) + 0.05) /

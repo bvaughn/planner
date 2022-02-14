@@ -9,13 +9,15 @@ import {
 import {
   BLACK,
   DARK_GRAY,
+  DEFAULT_FALLBACK_COLOR,
   LIGHT_GRAY,
   SLATE_GRAY,
   WHITE,
+  colorToRgba,
   getColorForString,
   getContrastRatio,
-  hexToRgba,
   highlight,
+  isValid,
 } from "../utils/color";
 import { getOwnerNames, getPrimaryOwnerName } from "../utils/task";
 import { getDurationLabel, getIntervalLabel } from "../utils/time";
@@ -253,7 +255,7 @@ export default function createDrawingUtils({
           badgeRect.height,
           avatar?.image ? CORNER_RADIUS : 0
         );
-        context.fillStyle = hexToRgba(contrastColor, OWNERS_BADGE_ALPHA);
+        context.fillStyle = colorToRgba(contrastColor, OWNERS_BADGE_ALPHA);
         context.fill();
 
         context.font = `bold ${FONT_SIZE_SMALL}px sans-serif`;
@@ -403,6 +405,8 @@ export default function createDrawingUtils({
       : team[task.owner];
 
     const color = task.color || owner?.color || getColorForString(ownerName);
+    const safeColor = isValid(color) ? color : DEFAULT_FALLBACK_COLOR;
+
     const avatar = ownerToImageMap.get(owner);
 
     drawTaskBar(
@@ -411,17 +415,25 @@ export default function createDrawingUtils({
       camera,
       task,
       taskRect,
-      color,
+      safeColor,
       chartWidth,
       isHovered
     );
-    drawOwnerAvatar(context, taskRect, task, team, color, avatar, isHovered);
+    drawOwnerAvatar(
+      context,
+      taskRect,
+      task,
+      team,
+      safeColor,
+      avatar,
+      isHovered
+    );
     drawTaskText(
       context,
       task,
       team,
       taskRect,
-      color,
+      safeColor,
       avatar,
       metadata,
       camera,
@@ -465,7 +477,7 @@ export default function createDrawingUtils({
       const fillStyle = index % 2 === 1 ? LIGHT_GRAY : WHITE;
 
       context.beginPath();
-      context.fillStyle = hexToRgba(fillStyle, 0.9);
+      context.fillStyle = colorToRgba(fillStyle, 0.9);
       context.rect(x, y, width, height);
       context.fill();
 

@@ -167,4 +167,52 @@ test.describe("Colors", () => {
       "canvas-screenshot-ongoing-pattern-colors.png"
     );
   });
+
+  test("should support different incoming color formats", async ({ page }) => {
+    await loadData(page, {
+      tasks: [
+        {
+          start: "2022-01-01",
+          stop: "2022-01-02",
+          name: "hex string",
+          color: "#0033FF",
+        },
+        {
+          start: "2022-01-02",
+          stop: "2022-01-03",
+          name: "short hex string",
+          color: "#a00",
+        },
+        {
+          start: "2022-01-03",
+          stop: "2022-01-04",
+          name: "rgb string",
+          color: "rgb(255,125, 50)",
+        },
+        {
+          start: "2022-01-04",
+          stop: "2022-01-05",
+          name: "rgba string",
+          color: "rgba(100, 0,50,0.5)",
+        },
+        {
+          start: "2022-01-05",
+          stop: "2022-01-06",
+          name: "keyword",
+          color: "yellow",
+        },
+        {
+          start: "2022-01-06",
+          stop: "2022-01-07",
+          name: "invalid color string",
+          color: "asdf",
+        },
+      ],
+      team: {},
+    });
+
+    expect(await page.locator("canvas").screenshot()).toMatchSnapshot(
+      "canvas-screenshot-color-formats.png"
+    );
+  });
 });
