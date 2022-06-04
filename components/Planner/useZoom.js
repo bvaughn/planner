@@ -1,9 +1,15 @@
 import { useEffect, useReducer, useRef } from "react";
+import { easeOutQuad } from "../utils/easing";
 import { normalizeWheelEvent } from "../utils/mouse";
 
+const DOUBLE_TAP_MAX_DURATION = 200;
+const DOUBLE_TAP_MOMENTUM_DELTA = -5;
+const DOUBLE_TAP_MOMENTUM_INTERVAL = 10;
+const DOUBLE_TAP_ZOOM_IN_DELTA = -50;
 const MIN_SCALE = 1;
 const MAX_SCALE = 10;
 const PAN_DELTA_THRESHOLD = 1;
+const TOUCH_MOMENTUM_DURATION = 250;
 const ZOOM_DELTA_THRESHOLD = 1;
 const ZOOM_MULTIPLIER = 0.01;
 
@@ -14,12 +20,14 @@ const DEFAULT_STATE = {
   naturalHeight: 0,
   width: 0,
 
-  // Managed internally
-  isDragging: false,
+  // Current pan and zoom
   x: 0,
   y: 0,
   z: 1,
 };
+
+// TODO Ignore right click
+// https://github.com/d3/d3-zoom/blob/main/src/zoom.js#L11
 
 // getDateLocation() should be kep in-sync with getDateLocation() in "drawingUtils.js"
 function getDateLocation(date, metadata, z, width) {
@@ -55,20 +63,13 @@ function reduce(state, action) {
         width,
       };
     }
-    case "set-is-dragging": {
-      const { isDragging } = payload;
-      return {
-        ...state,
-        isDragging,
-      };
-      break;
-    }
     case "set-metadata": {
       const { metadata } = payload;
       return {
         ...state,
         metadata,
-        isDragging: false,
+
+        // Reset scroll state when metadata changes.
         x: 0,
         y: 0,
         z: 1,
@@ -80,21 +81,21 @@ function reduce(state, action) {
 
       if (deltaX !== 0) {
         // TODO Can we cache this on "zoom" (and "set-chart-size") ?
-        const maxOffsetX =
+        const maxX =
           width - getDateLocation(metadata.stopDate, metadata, z, width);
 
-        const x = Math.min(0, Math.max(maxOffsetX, state.x - deltaX));
+        const x = Math.min(0, Math.max(maxX, state.x - deltaX));
 
         return {
           ...state,
           x: Math.round(x),
         };
       } else if (deltaY !== 0) {
-        const maxOffsetY = height - naturalHeight;
+        const maxY = height - naturalHeight;
 
         // TODO Respect natural scroll preference (if we can detect it?).
-        const newOffsetY = state.y - deltaY;
-        const y = Math.min(0, Math.max(maxOffsetY, newOffsetY));
+        const newY = state.y - deltaY;
+        const y = Math.min(0, Math.max(maxY, newY));
 
         return {
           ...state,
@@ -104,25 +105,25 @@ function reduce(state, action) {
     }
     case "zoom": {
       const { metadata, x, width } = state;
-      const { deltaX, deltaY, locationX } = payload;
+      const { delta, locationX } = payload;
 
       const z = Math.max(
         MIN_SCALE,
-        Math.min(MAX_SCALE, state.z - deltaY * ZOOM_MULTIPLIER)
+        Math.min(MAX_SCALE, state.z - delta * ZOOM_MULTIPLIER)
       );
 
-      const maxOffsetX =
+      const maxX =
         width - getDateLocation(metadata.stopDate, metadata, z, width);
 
       // Zoom in/out around the point we're currently hovered over.
       const scaleMultiplier = z / state.z;
       const scaledDelta = locationX - locationX * scaleMultiplier;
-      const newOffsetX = x * scaleMultiplier + scaledDelta;
-      const newClampedOffsetX = Math.min(0, Math.max(maxOffsetX, newOffsetX));
+      const newX = x * scaleMultiplier + scaledDelta;
+      const newClampedX = Math.min(0, Math.max(maxX, newX));
 
       return {
         ...state,
-        x: Math.round(newClampedOffsetX),
+        x: Math.round(newClampedX),
         z,
       };
     }
@@ -165,13 +166,98 @@ export default function useZoom({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
+      let currentTouchStartCenterX;
+      let currentTouchStartLength = 0;
+      let currentTouchStartTime = 0;
+      let isDragging;
+      let lastTouchDeltas;
+      let lastTouches;
+      let lastTouchTime = 0;
+      let momentumTimeoutID = null;
+
+      // Helper methods
+
+      const momentumHelper = ({ deltas, interval, locationX, startTime }) => {
+        const callback = () => {
+          const currentTime = performance.now();
+          const ellapsedTime = currentTime - startTime;
+          if (ellapsedTime <= TOUCH_MOMENTUM_DURATION) {
+            const value = easeOutQuad(
+              1 - ellapsedTime / TOUCH_MOMENTUM_DURATION
+            );
+            if (value > 0) {
+              const scaledDeltas = deltas.map(([deltaX, deltaY]) => [
+                deltaX * value,
+                deltaY * value,
+              ]);
+
+              panOrZoomDeltas(scaledDeltas, locationX);
+            }
+
+            momentumTimeoutID = setTimeout(callback, interval);
+          }
+        };
+
+        momentumTimeoutID = setTimeout(callback, interval);
+      };
+
+      const panOrZoomDeltas = (deltas, locationX) => {
+        // TODO Check delta threshold(s)
+
+        switch (deltas.length) {
+          case 1: {
+            const [deltaX, deltaY] = deltas[0];
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+              dispatch({
+                type: "pan",
+                payload: { deltaX: 0 - deltaX, deltaY: 0 },
+              });
+            } else {
+              dispatch({
+                type: "pan",
+                payload: { deltaX: 0, deltaY: 0 - deltaY },
+              });
+            }
+            break;
+          }
+          case 2: {
+            const [[deltaX0, deltaY0], [deltaX1, deltaY1]] = deltas;
+            const deltaXAbsolute = Math.abs(deltaX0) + Math.abs(deltaX1);
+            const deltaYAbsolute = Math.abs(deltaY0) + Math.abs(deltaY1);
+
+            // Horizontal zooms; ignore vertical.
+            if (deltaXAbsolute > deltaYAbsolute) {
+              const delta =
+                Math.abs(deltaX0) > Math.abs(deltaX1) ? 0 - deltaX0 : deltaX1;
+
+              dispatch({
+                type: "zoom",
+                payload: {
+                  delta,
+                  locationX,
+                },
+              });
+            }
+            break;
+          }
+        }
+      };
+
+      const stopActiveMomentumEffect = () => {
+        if (momentumTimeoutID != null) {
+          clearTimeout(momentumTimeoutID);
+          momentumTimeoutID = null;
+        }
+      };
+
+      // Event handlers
+
       const handleMouseDown = (event) => {
-        dispatch({ type: "set-is-dragging", payload: { isDragging: true } });
+        isDragging = true;
       };
 
       const handleMouseMove = (event) => {
-        const currentState = stateRef.current;
-        if (!currentState.isDragging) {
+        if (!isDragging) {
           return;
         }
 
@@ -206,7 +292,115 @@ export default function useZoom({
       };
 
       const handleMouseUp = (event) => {
-        dispatch({ type: "set-is-dragging", payload: { isDragging: false } });
+        isDragging = false;
+      };
+
+      const handleTouchEnd = (event) => {
+        const deltas = lastTouchDeltas;
+        const locationX = currentTouchStartCenterX;
+
+        const startTime = performance.now();
+        const interval = startTime - lastTouchTime;
+
+        currentTouchStartCenterX = null;
+        lastTouchDeltas = null;
+        lastTouches = null;
+        lastTouchTime = 0;
+
+        if (deltas == null) {
+          return;
+        }
+
+        momentumHelper({ deltas, interval, locationX, startTime });
+      };
+
+      const handleTouchMove = (event) => {
+        const { changedTouches, touches } = event;
+
+        if (lastTouches != null) {
+          if (changedTouches.length !== lastTouches.length) {
+            return;
+          }
+
+          stopEvent(event);
+
+          // Return an array of changed deltas, sorted along the x axis.
+          // This sorting is required for "zoom" logic since positive or negative values
+          // depend on the direction of the touch (which finger is pinching).
+          const sortedTouches = Array.from(changedTouches).sort((a, b) => {
+            if (a.pageX < b.pageX) {
+              return 1;
+            } else if (a.pageX > b.pageX) {
+              return -1;
+            } else {
+              return 0;
+            }
+          });
+
+          const lastTouchesMap = new Map();
+          for (let touch of lastTouches) {
+            lastTouchesMap.set(touch.identifier, {
+              pageX: touch.pageX,
+              pageY: touch.pageY,
+            });
+          }
+
+          const deltas = [];
+          for (let changedTouch of sortedTouches) {
+            const touch = lastTouchesMap.get(changedTouch.identifier);
+            if (touch) {
+              deltas.push([
+                changedTouch.pageX - touch.pageX,
+                changedTouch.pageY - touch.pageY,
+              ]);
+            }
+          }
+
+          panOrZoomDeltas(deltas, currentTouchStartCenterX);
+        }
+
+        lastTouchDeltas = deltas;
+        lastTouches = touches;
+        lastTouchTime = performance.now();
+      };
+
+      const handleTouchStart = (event) => {
+        const { touches } = event;
+
+        stopEvent(event);
+
+        // Interrupt any active momentum scrolling.
+        stopActiveMomentumEffect();
+
+        const length = touches.length;
+        const now = performance.now();
+
+        if (
+          now - currentTouchStartTime < DOUBLE_TAP_MAX_DURATION &&
+          length === currentTouchStartLength &&
+          length === 1
+        ) {
+          const locationX = touches[0].pageX;
+          const fauxDeltas = [DOUBLE_TAP_MOMENTUM_DELTA, 0];
+
+          momentumHelper({
+            deltas: [fauxDeltas, fauxDeltas],
+            interval: DOUBLE_TAP_MOMENTUM_INTERVAL,
+            locationX,
+            startTime: now,
+          });
+
+          return;
+        } else {
+          currentTouchStartCenterX =
+            length === 1
+              ? touches[0].pageX
+              : touches[0].pageX + (touches[1].pageX - touches[0].pageX) / 2;
+        }
+
+        lastTouches = touches;
+        currentTouchStartLength = length;
+        currentTouchStartTime = now;
       };
 
       const handleWheel = (event) => {
@@ -216,10 +410,7 @@ export default function useZoom({
         const deltaYAbsolute = Math.abs(deltaY);
         const deltaXAbsolute = Math.abs(deltaX);
 
-        const currentState = stateRef.current;
-
-        // Vertical scrolling zooms in and out (unless the SHIFT modifier is used).
-        // Horizontal scrolling pans.
+        // Horizontal wheel pans; vertical wheel zooms (unless the SHIFT modifier is used).
         if (deltaYAbsolute > deltaXAbsolute) {
           if (shiftKey) {
             stopEvent(event);
@@ -240,7 +431,7 @@ export default function useZoom({
 
               dispatch({
                 type: "zoom",
-                payload: { deltaX, deltaY, locationX },
+                payload: { delta: deltaY, locationX },
               });
             }
           }
@@ -257,17 +448,25 @@ export default function useZoom({
       };
 
       canvas.addEventListener("mousedown", handleMouseDown);
+      canvas.addEventListener("touchstart", handleTouchStart);
       canvas.addEventListener("wheel", handleWheel);
 
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
+      window.addEventListener("touchend", handleTouchEnd);
+      window.addEventListener("touchmove", handleTouchMove, { passive: false });
 
       return () => {
         canvas.removeEventListener("mousedown", handleMouseDown);
+        canvas.removeEventListener("touchstart", handleTouchStart);
         canvas.removeEventListener("wheel", handleWheel);
 
         window.removeEventListener("mousemove", handleMouseMove);
         window.removeEventListener("mouseup", handleMouseUp);
+        window.removeEventListener("touchend", handleTouchEnd);
+        window.removeEventListener("touchmove", handleTouchMove, {
+          passive: false,
+        });
       };
     }
   }, [canvasRef]);
