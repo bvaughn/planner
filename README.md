@@ -2,6 +2,10 @@
 
 Lightweight, interactive planning tool that visualizes a series of tasks using an HTML canvas.
 
+---
+### 🎉 [Become a sponsor](https://github.com/sponsors/bvaughn/) or ☕ [Buy me a coffee](http://givebrian.coffee/)
+---
+
 ![Planner JS meta-image](https://user-images.githubusercontent.com/29597/152083012-5f525bcb-cfbb-40ef-b560-cd415b5fd4f0.png)
 
 Try it yourself at [plannerjs.dev](https://plannerjs.dev)
