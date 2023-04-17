@@ -1,5 +1,4 @@
-import { useMemo, useRef, useState } from "react";
-import ReactDOM from "react-dom";
+import { useMemo, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import Planner from "../Planner";
 import CodeEditor from "./CodeEditor";

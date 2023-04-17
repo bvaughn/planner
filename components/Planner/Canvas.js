@@ -2,7 +2,6 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import MouseControls from "./MouseControls";
 import createDrawingUtils from "./drawingUtils";
 import useZoom from "./useZoom";
-import { openInNewTab } from "../utils/url";
 
 // Processes data; arguably should be moved into Preloader component.
 export default function Canvas({
